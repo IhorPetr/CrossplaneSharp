@@ -4,6 +4,16 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+
+        <!-- NuGet package metadata -->
+        <PackageId>CrossplaneSharp</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>IhorPetr</Authors>
+        <Description>C# implementation of the Python crossplane NGINX config parser/lexer/builder</Description>
+        <PackageTags>nginx;crossplane;config;parser;lexer;builder</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/IhorPetr/CrossplaneSharp</RepositoryUrl>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
 
 </Project>
