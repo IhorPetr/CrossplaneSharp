@@ -4,7 +4,7 @@ namespace CrossplaneSharp;
 
 /// <summary>
 /// Parses one or more NGINX configuration files into a <see cref="ParseResult"/>.
-/// Faithful C# port of Python crossplane <c>parser.py</c> — including context tracking,
+/// C# port of Python crossplane <c>parser.py</c> — including context tracking,
 /// include-file index management, <c>if(…)</c> arg stripping, and combine mode.
 /// </summary>
 public class NginxParser

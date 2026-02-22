@@ -4,7 +4,7 @@ namespace CrossplaneSharp;
 
 /// <summary>
 /// Validates nginx directives: context and argument-count.
-/// Faithful C# port of Python crossplane <c>analyzer.py</c>.
+/// C# port of Python crossplane <c>analyzer.py</c>.
 /// </summary>
 public static class NginxAnalyzer
 {

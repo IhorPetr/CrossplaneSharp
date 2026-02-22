@@ -4,7 +4,7 @@ namespace CrossplaneSharp;
 
 /// <summary>
 /// Reconstructs an NGINX configuration string from a list of <see cref="ConfigBlock"/> directives.
-/// Faithful C# port of Python crossplane <c>builder.py</c> — including <c>_enquote</c>,
+/// C# port of Python crossplane <c>builder.py</c> — including <c>_enquote</c>,
 /// <c>if(…)</c> syntax, same-line inline comments, optional header, and <c>BuildFiles</c>.
 /// </summary>
 public class NginxBuilder

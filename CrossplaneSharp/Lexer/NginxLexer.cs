@@ -5,7 +5,7 @@ namespace CrossplaneSharp;
 
 /// <summary>
 /// Tokenises an NGINX configuration file into a stream of <see cref="NgxToken"/> values.
-/// Faithful C# port of Python crossplane <c>lexer.py</c>.
+/// C# port of Python crossplane <c>lexer.py</c>.
 /// </summary>
 public class NginxLexer
 {
