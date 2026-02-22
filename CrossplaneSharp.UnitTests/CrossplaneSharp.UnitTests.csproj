@@ -25,4 +25,10 @@
         <ProjectReference Include="..\CrossplaneSharp\CrossplaneSharp.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <None Update="nginx/**">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
 </Project>
