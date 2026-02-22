@@ -60,6 +60,7 @@ public class NginxParser
             }
             catch (Exception ex)
             {
+                if (!options.CatchErrors) throw;
                 HandleError(parsing, payload, fname, ex, options);
             }
 
