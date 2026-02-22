@@ -1,9 +1,26 @@
 namespace CrossplaneSharp;
 
 /// <summary>
-/// Represents a single token produced by the NGINX config lexer.
+/// A single token produced by <see cref="NginxLexer"/>.
+/// Mirrors the Python crossplane 3-tuple <c>(token, lineno, quoted)</c>.
 /// </summary>
-/// <param name="Value">The raw string value of the token.</param>
-/// <param name="Line">The 1-based line number where the token starts.</param>
-/// <param name="IsQuoted">Whether the token was enclosed in quotes.</param>
-public record NgxToken(string Value, int Line, bool IsQuoted);
+public sealed class NgxToken
+{
+    /// <summary>The raw text of the token.</summary>
+    public string Value { get; }
+
+    /// <summary>The 1-based line number where the token starts.</summary>
+    public int Line { get; }
+
+    /// <summary><c>true</c> if the token was enclosed in quotes.</summary>
+    public bool IsQuoted { get; }
+
+    public NgxToken(string value, int line, bool isQuoted)
+    {
+        Value = value;
+        Line = line;
+        IsQuoted = isQuoted;
+    }
+
+    public override string ToString() => $"NgxToken({Value}, line={Line}, quoted={IsQuoted})";
+}

@@ -1,135 +1,246 @@
 using System.Text;
+using CrossplaneSharp.Exceptions;
 
 namespace CrossplaneSharp;
 
 /// <summary>
 /// Tokenises an NGINX configuration file into a stream of <see cref="NgxToken"/> values.
-/// Equivalent to the Python crossplane <c>lex()</c> function.
+/// Faithful C# port of Python crossplane <c>lexer.py</c>.
 /// </summary>
 public class NginxLexer
 {
+    // -------------------------------------------------------------------------
+    // Public API
+    // -------------------------------------------------------------------------
+
     /// <summary>
-    /// Tokenises the file at <paramref name="filename"/> and yields tokens one by one.
+    /// Tokenises the file at <paramref name="filename"/> and returns tokens as a list.
+    /// Raises <see cref="NgxParserSyntaxError"/> on unbalanced braces.
+    /// </summary>
+    public IReadOnlyList<NgxToken> Lex(string filename)
+    {
+        string content = File.ReadAllText(filename, Encoding.UTF8);
+        return LexContent(content, filename).ToList();
+    }
+
+    /// <summary>
+    /// Tokenises an in-memory config string. Used by tests and the parser.
+    /// </summary>
+    public IReadOnlyList<NgxToken> LexString(string content, string? filename = null)
+        => LexContent(content, filename).ToList();
+
+    /// <summary>
+    /// Tokenises the file at <paramref name="filename"/> and returns a lazy sequence.
+    /// Used internally by <see cref="NginxParser"/> and exposed publicly for streaming use.
     /// </summary>
     public IEnumerable<NgxToken> Tokenize(string filename)
     {
-        string content = File.ReadAllText(filename);
-        return TokenizeContent(content);
+        string content = File.ReadAllText(filename, Encoding.UTF8);
+        return LexContent(content, filename);
     }
 
     /// <summary>
-    /// Tokenises an NGINX config from a string and yields tokens one by one.
-    /// Useful for testing without touching the file system.
+    /// Alias for <see cref="LexString"/> — tokenises an in-memory config string.
     /// </summary>
-    public IEnumerable<NgxToken> TokenizeContent(string content)
+    public IEnumerable<NgxToken> TokenizeContent(string content, string? filename = null)
+        => LexContent(content, filename);
+
+    // -------------------------------------------------------------------------
+    // Core implementation – mirrors _lex_file_object → _balance_braces → lex
+    // -------------------------------------------------------------------------
+
+    private static IEnumerable<NgxToken> LexContent(string text, string? filename)
     {
-        int line = 1;
-        int i = 0;
-        int length = content.Length;
+        var raw = LexFileObject(text);
+        return BalanceBraces(raw, filename);
+    }
 
-        while (i < length)
+    /// <summary>
+    /// Main tokeniser. Mirrors Python <c>_lex_file_object</c>.
+    /// Handles:
+    ///   • whitespace (skip / flush buffer)
+    ///   • comments  (#…\n)
+    ///   • quoted strings (single or double, with escape handling)
+    ///   • variable expansion (${ … })
+    ///   • delimiters  { } ;
+    ///   • backslash-escaped characters
+    /// </summary>
+    private static IEnumerable<NgxToken> LexFileObject(string text)
+    {
+        // Build a list of (singleCharOrEscapePair, lineNumber).
+        // This mirrors Python's chain(file_obj) → _iterescape → _iterlinecount.
+        var chars = BuildCharStream(text);
+        int pos = 0;
+
+        string tokenBuf = "";
+        int tokenLine = 0;
+
+        while (pos < chars.Count)
         {
-            char c = content[i];
+            var (ch, line) = chars[pos];
 
-            // ── Newline ──────────────────────────────────────────────────────────
-            if (c == '\n')
+            // ── whitespace ────────────────────────────────────────────────────
+            if (IsSpace(ch))
             {
-                line++;
-                i++;
-                continue;
-            }
-
-            // ── Other whitespace ─────────────────────────────────────────────────
-            if (char.IsWhiteSpace(c))
-            {
-                i++;
-                continue;
-            }
-
-            // ── Comment ──────────────────────────────────────────────────────────
-            if (c == '#')
-            {
-                int tokenLine = line;
-                int start = i;
-                while (i < length && content[i] != '\n')
-                    i++;
-                yield return new NgxToken(content[start..i], tokenLine, false);
-                continue;
-            }
-
-            // ── Special single-character tokens ──────────────────────────────────
-            if (c is '{' or '}' or ';')
-            {
-                yield return new NgxToken(c.ToString(), line, false);
-                i++;
-                continue;
-            }
-
-            // ── Quoted string ────────────────────────────────────────────────────
-            if (c is '"' or '\'')
-            {
-                char quote = c;
-                int tokenLine = line;
-                var sb = new StringBuilder();
-                i++; // skip opening quote
-
-                while (i < length)
+                if (tokenBuf.Length > 0)
                 {
-                    char ch = content[i];
-                    if (ch == '\n') line++;
+                    yield return new NgxToken(tokenBuf, tokenLine, false);
+                    tokenBuf = "";
+                }
+                // skip all whitespace
+                while (pos < chars.Count && IsSpace(chars[pos].Ch))
+                    pos++;
+                continue;
+            }
 
-                    if (ch == '\\' && i + 1 < length)
-                    {
-                        // preserve escape sequence literally
-                        sb.Append(ch);
-                        char escaped = content[i + 1];
-                        if (escaped == '\n') line++;
-                        sb.Append(escaped);
-                        i += 2;
-                        continue;
-                    }
+            // ── comment ───────────────────────────────────────────────────────
+            if (tokenBuf.Length == 0 && ch == "#")
+            {
+                var sb = new StringBuilder();
+                while (pos < chars.Count && !chars[pos].Ch.EndsWith("\n"))
+                {
+                    sb.Append(chars[pos].Ch);
+                    pos++;
+                }
+                yield return new NgxToken(sb.ToString(), line, false);
+                continue;
+            }
 
-                    if (ch == quote)
+            // ── record start line for token ───────────────────────────────────
+            if (tokenBuf.Length == 0)
+                tokenLine = line;
+
+            // ── variable expansion: ${var} ────────────────────────────────────
+            // When the last char of the buffer is $ and next char is {,
+            // keep reading until we close with }
+            if (tokenBuf.Length > 0 && tokenBuf[^1] == '$' && ch == "{")
+            {
+                while (pos < chars.Count && tokenBuf[^1] != '}' && !IsSpace(chars[pos].Ch))
+                {
+                    tokenBuf += chars[pos].Ch;
+                    pos++;
+                }
+                continue;
+            }
+
+            // ── quoted string ─────────────────────────────────────────────────
+            if (ch == "\"" || ch == "'")
+            {
+                // A quote inside an existing token is treated as a plain char
+                if (tokenBuf.Length > 0)
+                {
+                    tokenBuf += ch;
+                    pos++;
+                    continue;
+                }
+
+                string quote = ch;
+                pos++; // skip opening quote
+
+                var sb = new StringBuilder();
+                while (pos < chars.Count)
+                {
+                    var (qch, qline) = chars[pos];
+                    if (qch == quote)
                     {
-                        i++; // skip closing quote
+                        pos++; // skip closing quote
                         break;
                     }
-
-                    sb.Append(ch);
-                    i++;
+                    // escaped quote: \' or \"  appears as 2-char escape-pair
+                    sb.Append(qch == "\\" + quote ? quote : qch);
+                    pos++;
                 }
 
                 yield return new NgxToken(sb.ToString(), tokenLine, true);
+                tokenBuf = "";
                 continue;
             }
 
-            // ── Regular (unquoted) token ─────────────────────────────────────────
+            // ── delimiters ────────────────────────────────────────────────────
+            if (ch == "{" || ch == "}" || ch == ";")
             {
-                int tokenLine = line;
-                var sb = new StringBuilder();
-
-                while (i < length)
+                if (tokenBuf.Length > 0)
                 {
-                    char ch = content[i];
-
-                    if (char.IsWhiteSpace(ch) || ch is '{' or '}' or ';' or '"' or '\'')
-                        break;
-
-                    if (ch == '\\' && i + 1 < length)
-                    {
-                        sb.Append(ch);
-                        sb.Append(content[i + 1]);
-                        i += 2;
-                        continue;
-                    }
-
-                    sb.Append(ch);
-                    i++;
+                    yield return new NgxToken(tokenBuf, tokenLine, false);
+                    tokenBuf = "";
                 }
+                yield return new NgxToken(ch, line, false);
+                pos++;
+                continue;
+            }
 
-                if (sb.Length > 0)
-                    yield return new NgxToken(sb.ToString(), tokenLine, false);
+            // ── regular character ─────────────────────────────────────────────
+            tokenBuf += ch;
+            pos++;
+        }
+
+        // flush any remaining buffer
+        if (tokenBuf.Length > 0)
+            yield return new NgxToken(tokenBuf, tokenLine, false);
+    }
+
+    // -------------------------------------------------------------------------
+
+    private readonly record struct CharEntry(string Ch, int Line);
+
+    /// <summary>
+    /// Mirrors Python <c>_iterescape</c> + <c>_iterlinecount</c>:
+    /// backslash + next-char become one 2-char entry; newlines increment line.
+    /// </summary>
+    private static IReadOnlyList<CharEntry> BuildCharStream(string text)
+    {
+        var list = new List<CharEntry>(text.Length);
+        int line = 1;
+        int i = 0;
+
+        while (i < text.Length)
+        {
+            char c = text[i];
+            if (c == '\\' && i + 1 < text.Length)
+            {
+                char next = text[i + 1];
+                string pair = "\\" + next;
+                if (next == '\n') line++;
+                list.Add(new CharEntry(pair, line));
+                i += 2;
+            }
+            else
+            {
+                string s = c.ToString();
+                list.Add(new CharEntry(s, line));
+                if (c == '\n') line++;
+                i++;
             }
         }
+        return list;
     }
+
+    /// <summary>
+    /// Mirrors Python <c>_balance_braces</c>: raises on unbalanced { }.
+    /// </summary>
+    private static IEnumerable<NgxToken> BalanceBraces(IEnumerable<NgxToken> tokens, string? filename)
+    {
+        int depth = 0;
+        NgxToken? last = null;
+
+        foreach (var t in tokens)
+        {
+            last = t;
+            if (!t.IsQuoted)
+            {
+                if (t.Value == "}") depth--;
+                else if (t.Value == "{") depth++;
+
+                if (depth < 0)
+                    throw new NgxParserSyntaxError("unexpected \"}\"", filename, t.Line);
+            }
+            yield return t;
+        }
+
+        if (depth > 0)
+            throw new NgxParserSyntaxError(
+                "unexpected end of file, expecting \"}\"", filename, last?.Line);
+    }
+
+    private static bool IsSpace(string s) => s.Length == 1 && char.IsWhiteSpace(s[0]);
 }

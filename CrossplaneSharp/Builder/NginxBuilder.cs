@@ -3,8 +3,9 @@ using System.Text;
 namespace CrossplaneSharp;
 
 /// <summary>
-/// Reconstructs an NGINX configuration text from a list of <see cref="ConfigBlock"/>
-/// directives.  Equivalent to the Python crossplane <c>build()</c> function.
+/// Reconstructs an NGINX configuration string from a list of <see cref="ConfigBlock"/> directives.
+/// Faithful C# port of Python crossplane <c>builder.py</c> — including <c>_enquote</c>,
+/// <c>if(…)</c> syntax, same-line inline comments, optional header, and <c>BuildFiles</c>.
 /// </summary>
 public class NginxBuilder
 {
@@ -13,73 +14,166 @@ public class NginxBuilder
     // ──────────────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Builds an NGINX config string from <paramref name="directives"/>.
+    /// Builds an NGINX config string from <paramref name="block"/>.
+    /// Equivalent to Python <c>crossplane.build(payload, …)</c>.
     /// </summary>
-    public string Build(IEnumerable<ConfigBlock> directives, BuildOptions? options = null)
+    public string Build(IEnumerable<ConfigBlock> block, BuildOptions? options = null)
     {
         options ??= new BuildOptions();
-        var sb = new StringBuilder();
-        BuildBlocks(directives, sb, options, depth: 0);
+        string padding = options.Tabs ? "\t" : new string(' ', options.Indent);
 
-        if (options.Newline && sb.Length > 0 && sb[^1] != '\n')
-            sb.Append('\n');
+        var head = new StringBuilder();
+        if (options.Header)
+        {
+            head.AppendLine("# This config was built from JSON using NGINX crossplane.");
+            head.AppendLine("# If you encounter any bugs please report them here:");
+            head.AppendLine("# https://github.com/nginxinc/crossplane/issues");
+            head.AppendLine();
+        }
 
-        return sb.ToString();
+        string body = BuildBlock("", block.ToList(), padding, depth: 0, lastLine: 0);
+        return head + body;
+    }
+
+    /// <summary>
+    /// Writes each config entry from <paramref name="payload"/> to disk.
+    /// Equivalent to Python <c>crossplane.build_files(payload, …)</c>.
+    /// </summary>
+    public void BuildFiles(ParseResult payload, string? dirname = null, BuildOptions? options = null)
+    {
+        dirname ??= Directory.GetCurrentDirectory();
+        options ??= new BuildOptions();
+
+        foreach (var config in payload.Config)
+        {
+            string path = config.File;
+            if (!Path.IsPathRooted(path))
+                path = Path.Combine(dirname, path);
+
+            string? dirPath = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(dirPath) && !Directory.Exists(dirPath))
+                Directory.CreateDirectory(dirPath);
+
+            string output = Build(config.Parsed, options).TrimEnd() + "\n";
+            File.WriteAllText(path, output, Encoding.UTF8);
+        }
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // Internal helpers
+    // Core block builder  (mirrors Python _build_block)
     // ──────────────────────────────────────────────────────────────────────────
 
-    private static void BuildBlocks(
-        IEnumerable<ConfigBlock> directives,
-        StringBuilder sb,
-        BuildOptions options,
-        int depth)
+    private static string BuildBlock(
+        string output, List<ConfigBlock> block,
+        string padding, int depth, int lastLine)
     {
-        string indent = string.Concat(Enumerable.Repeat(options.Indent, depth));
+        string margin = string.Concat(Enumerable.Repeat(padding, depth));
 
-        foreach (ConfigBlock directive in directives)
+        foreach (var stmt in block)
         {
-            // ── Comment ───────────────────────────────────────────────────────
-            if (directive.Directive == "#")
+            string directive = Enquote(stmt.Directive);
+            int line = stmt.Line;
+
+            // ── inline comment on same line as previous directive ─────────────
+            if (directive == "#" && lastLine != 0 && line == lastLine)
             {
-                if (options.IncludeComments)
-                {
-                    sb.Append(indent);
-                    sb.Append('#');
-                    if (!string.IsNullOrEmpty(directive.Comment))
-                    {
-                        sb.Append(' ');
-                        sb.Append(directive.Comment);
-                    }
-                    sb.Append('\n');
-                }
+                var inlineText = stmt.Comment ?? "";
+                output += inlineText.Length > 0 ? " # " + inlineText : " #";
                 continue;
             }
 
-            sb.Append(indent);
-            sb.Append(directive.Directive);
-
-            // Args
-            if (directive.Args.Count > 0)
+            string built;
+            if (directive == "#")
             {
-                sb.Append(' ');
-                sb.Append(string.Join(" ", directive.Args));
-            }
-
-            // Block
-            if (directive.Block is not null)
-            {
-                sb.Append(" {\n");
-                BuildBlocks(directive.Block, sb, options, depth + 1);
-                sb.Append(indent);
-                sb.Append("}\n");
+                var commentText = stmt.Comment ?? "";
+                built = commentText.Length > 0 ? "# " + commentText : "#";
             }
             else
             {
-                sb.Append(";\n");
+                var args = stmt.Args.Select(Enquote).ToList();
+
+                if (directive == "if")
+                    built = "if (" + string.Join(" ", args) + ")";
+                else if (args.Count > 0)
+                    built = directive + " " + string.Join(" ", args);
+                else
+                    built = directive;
+
+                if (stmt.Block is null)
+                {
+                    built += ";";
+                }
+                else
+                {
+                    built += " {";
+                    built = BuildBlock(built, stmt.Block, padding, depth + 1, line);
+                    built += "\n" + margin + "}";
+                }
             }
+
+            output += (output.Length > 0 ? "\n" : "") + margin + built;
+            lastLine = line;
         }
+
+        return output;
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // _enquote  (mirrors Python builder._enquote / _needs_quotes)
+    // ──────────────────────────────────────────────────────────────────────────
+
+    private static string Enquote(string arg)
+    {
+        if (!NeedsQuotes(arg)) return arg;
+        // repr-like: use JSON-style escaping (mirrors Python repr().replace('\\\\','\\'))
+        string r = System.Text.Json.JsonSerializer.Serialize(arg);
+        r = r.Replace("\\\\", "\\");
+        return r;
+    }
+
+    private static bool NeedsQuotes(string s)
+    {
+        if (s.Length == 0) return true;
+
+        using var chars = Escape(s).GetEnumerator();
+        if (!chars.MoveNext()) return true;
+
+        string first = chars.Current;
+        if (first.Length == 1 && char.IsWhiteSpace(first[0])) return true;
+        if (first == "{" || first == "}" || first == ";" || first == "\"" || first == "'" || first == "${")
+            return true;
+
+        bool expanding = false;
+        string last = first;
+        while (chars.MoveNext())
+        {
+            last = chars.Current;
+            if (last.Length == 1 && (char.IsWhiteSpace(last[0]) || last == "{" || last == ";" || last == "\"" || last == "'"))
+                return true;
+            if (last == (expanding ? "${" : "}")) return true;
+            if (last == (expanding ? "}" : "${")) expanding = !expanding;
+        }
+        return last == "\\" || last == "$" || expanding;
+    }
+
+    /// <summary>Mirrors Python builder._escape generator.</summary>
+    private static IEnumerable<string> Escape(string s)
+    {
+        string prev = "", cur = "";
+        foreach (char c in s)
+        {
+            cur = c.ToString();
+            if (prev == "\\" || prev + cur == "${")
+            {
+                prev += cur;
+                yield return prev;
+                prev = ""; cur = "";
+                continue;
+            }
+            if (prev == "$") yield return prev;
+            if (cur != "\\" && cur != "$") yield return cur;
+            prev = cur;
+        }
+        if (cur == "\\" || cur == "$") yield return cur;
     }
 }

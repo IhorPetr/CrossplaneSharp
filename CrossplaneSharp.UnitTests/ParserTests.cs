@@ -70,7 +70,7 @@ public class ParserTests
 
             var comment = result.Config[0].Parsed.FirstOrDefault(b => b.Directive == "#");
             Assert.That(comment, Is.Not.Null);
-            Assert.That(comment!.Comment, Is.EqualTo("top-level comment"));
+            Assert.That(comment!.Comment?.Trim(), Is.EqualTo("top-level comment"));
         }
         finally
         {
@@ -82,7 +82,7 @@ public class ParserTests
     public void Parser_NginxConfFixture_ParsesSuccessfully()
     {
         ParseResult result = new NginxParser().Parse(NginxConfPath,
-            new ParseOptions { ParseIncludes = false });
+            new ParseOptions { Single = true });
 
         Assert.That(result.Status, Is.EqualTo("ok"));
         var directives = result.Config[0].Parsed;

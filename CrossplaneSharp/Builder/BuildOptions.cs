@@ -2,15 +2,25 @@ namespace CrossplaneSharp;
 
 /// <summary>
 /// Controls the output format of <see cref="NginxBuilder.Build"/>.
+/// Mirrors the parameters of the Python crossplane <c>build()</c> function.
 /// </summary>
 public class BuildOptions
 {
-    /// <summary>String used for each indentation level (default: four spaces).</summary>
-    public string Indent { get; set; } = "    ";
+    /// <summary>
+    /// Spaces per indent level (ignored when <see cref="Tabs"/> is <c>true</c>).
+    /// Equivalent to Python <c>indent</c>. Default: 4.
+    /// </summary>
+    public int Indent { get; set; } = 4;
 
-    /// <summary>Emit comment blocks that were preserved during parsing.</summary>
-    public bool IncludeComments { get; set; } = true;
+    /// <summary>
+    /// Use a tab character instead of spaces for indentation.
+    /// Equivalent to Python <c>tabs</c>. Default: <c>false</c>.
+    /// </summary>
+    public bool Tabs { get; set; } = false;
 
-    /// <summary>Append a trailing newline to the output.</summary>
-    public bool Newline { get; set; } = true;
+    /// <summary>
+    /// Prepend a "built by crossplane" comment header.
+    /// Equivalent to Python <c>header</c>. Default: <c>false</c>.
+    /// </summary>
+    public bool Header { get; set; } = false;
 }

@@ -50,7 +50,7 @@ public class BuilderTests
             new ConfigBlock { Directive = "worker_processes", Args = new List<string> { "1" } }
         };
 
-        string output = new NginxBuilder().Build(directives, new BuildOptions { IncludeComments = true });
+        string output = new NginxBuilder().Build(directives, new BuildOptions());
         Assert.That(output, Does.Contain("# my comment"));
     }
 
@@ -80,7 +80,7 @@ public class BuilderTests
     public void RoundTrip_NginxConfFixture_BuildsWithoutError()
     {
         ParseResult result = new NginxParser().Parse(NginxConfPath,
-            new ParseOptions { ParseIncludes = false });
+            new ParseOptions { Single = true });
 
         Assert.That(result.Status, Is.EqualTo("ok"));
 

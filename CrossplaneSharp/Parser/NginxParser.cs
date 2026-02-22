@@ -3,9 +3,9 @@ using CrossplaneSharp.Exceptions;
 namespace CrossplaneSharp;
 
 /// <summary>
-/// Parses one or more NGINX configuration files into a structured
-/// <see cref="ParseResult"/>.  Equivalent to the Python crossplane
-/// <c>parse()</c> function.
+/// Parses one or more NGINX configuration files into a <see cref="ParseResult"/>.
+/// Faithful C# port of Python crossplane <c>parser.py</c> — including context tracking,
+/// include-file index management, <c>if(…)</c> arg stripping, and combine mode.
 /// </summary>
 public class NginxParser
 {
@@ -17,306 +17,315 @@ public class NginxParser
 
     /// <summary>
     /// Parses the NGINX config at <paramref name="filename"/>.
+    /// Mirrors Python <c>crossplane.parse(filename, …)</c>.
     /// </summary>
     public ParseResult Parse(string filename, ParseOptions? options = null)
     {
         options ??= new ParseOptions();
-        var result = new ParseResult();
-        ParseFile(filename, result, options);
-        return result;
-    }
+        filename = Path.GetFullPath(filename);
+        string configDir = Path.GetDirectoryName(filename) ?? Directory.GetCurrentDirectory();
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Internal helpers
-    // ──────────────────────────────────────────────────────────────────────────
+        var payload = new ParseResult();
 
-    private void ParseFile(string filename, ParseResult result, ParseOptions options)
-    {
-        var configFile = new ConfigFile { File = filename };
+        // Work-list of (filename, context) to parse – grows as includes are found
+        var includes = new List<(string File, IReadOnlyList<string> Ctx)>
+            { (filename, Array.Empty<string>()) };
+        var included = new Dictionary<string, int>(StringComparer.Ordinal)
+            { [filename] = 0 };
 
-        try
+        // iterate – list grows during iteration
+        for (int i = 0; i < includes.Count; i++)
         {
-            IEnumerable<NgxToken> tokens = _lexer.Tokenize(filename);
-            using var enumerator = tokens.GetEnumerator();
+            var (fname, ctx) = includes[i];
+            var parsing = new ConfigFile { File = fname };
 
-            ParseBlock(enumerator, configFile, result, options, filename, depth: 0);
-        }
-        catch (Exception ex) when (ex is not NgxParserBaseException || options.CatchErrors)
-        {
-            var error = new ParseError
-            {
-                Error = ex.Message,
-                File = filename,
-                Line = 0
-            };
-            configFile.Errors.Add(error);
-            result.Errors.Add(error);
-            configFile.Status = "failed";
-            result.Status = "failed";
-        }
-
-        result.Config.Add(configFile);
-    }
-
-    /// <summary>
-    /// Parses a sequence of directives from <paramref name="enumerator"/> until
-    /// the end of the token stream or a closing <c>}</c> is encountered.
-    /// </summary>
-    private void ParseBlock(
-        IEnumerator<NgxToken> enumerator,
-        ConfigFile configFile,
-        ParseResult result,
-        ParseOptions options,
-        string filename,
-        int depth)
-    {
-        while (enumerator.MoveNext())
-        {
-            NgxToken token = enumerator.Current;
-
-            // ── Comment ───────────────────────────────────────────────────────
-            if (token.Value.StartsWith('#'))
-            {
-                if (options.Comments)
-                {
-                    configFile.Parsed.Add(new ConfigBlock
-                    {
-                        Directive = "#",
-                        Line = token.Line,
-                        Args = new List<string>(),
-                        Comment = token.Value[1..].TrimStart()
-                    });
-                }
-                continue;
-            }
-
-            // ── End of block ─────────────────────────────────────────────────
-            if (token.Value == "}")
-            {
-                if (depth == 0)
-                    RecordError(configFile, result, filename, token.Line,
-                                "unexpected \"}\"", options);
-                return;
-            }
-
-            // ── Directive name ────────────────────────────────────────────────
-            var block = new ConfigBlock
-            {
-                Directive = token.Value,
-                Line = token.Line
-            };
-
-            // Collect arguments until `;` or `{`
-            bool blockOpened = false;
-            while (enumerator.MoveNext())
-            {
-                NgxToken argToken = enumerator.Current;
-
-                if (argToken.Value == ";")
-                    break;
-
-                if (argToken.Value == "{")
-                {
-                    blockOpened = true;
-                    break;
-                }
-
-                if (argToken.Value == "}" || argToken.Value.StartsWith('#'))
-                {
-                    // Unexpected end – put the error and stop
-                    RecordError(configFile, result, filename, argToken.Line,
-                                $"unexpected token \"{argToken.Value}\"", options);
-                    return;
-                }
-
-                block.Args.Add(argToken.IsQuoted
-                    ? $"\"{argToken.Value}\""
-                    : argToken.Value);
-            }
-
-            if (blockOpened)
-            {
-                block.Block = new List<ConfigBlock>();
-                ParseNestedBlock(enumerator, block.Block, configFile, result, options, filename, depth + 1);
-            }
-
-            // ── Handle include directives ─────────────────────────────────────
-            if (block.Directive.Equals("include", StringComparison.OrdinalIgnoreCase)
-                && options.ParseIncludes
-                && block.Args.Count > 0)
-            {
-                string pattern = block.Args[0].Trim('"', '\'');
-                block.Includes = new List<ConfigFile>();
-                ResolveIncludes(pattern, filename, block.Includes, result, options);
-            }
-
-            configFile.Parsed.Add(block);
-        }
-    }
-
-    /// <summary>
-    /// Parses the contents of a <c>{ … }</c> block into <paramref name="blocks"/>.
-    /// </summary>
-    private void ParseNestedBlock(
-        IEnumerator<NgxToken> enumerator,
-        List<ConfigBlock> blocks,
-        ConfigFile configFile,
-        ParseResult result,
-        ParseOptions options,
-        string filename,
-        int depth)
-    {
-        while (enumerator.MoveNext())
-        {
-            NgxToken token = enumerator.Current;
-
-            // ── Comment ───────────────────────────────────────────────────────
-            if (token.Value.StartsWith('#'))
-            {
-                if (options.Comments)
-                {
-                    blocks.Add(new ConfigBlock
-                    {
-                        Directive = "#",
-                        Line = token.Line,
-                        Args = new List<string>(),
-                        Comment = token.Value[1..].TrimStart()
-                    });
-                }
-                continue;
-            }
-
-            // ── End of block ─────────────────────────────────────────────────
-            if (token.Value == "}")
-                return;
-
-            // ── Directive name ────────────────────────────────────────────────
-            var block = new ConfigBlock
-            {
-                Directive = token.Value,
-                Line = token.Line
-            };
-
-            bool blockOpened = false;
-            while (enumerator.MoveNext())
-            {
-                NgxToken argToken = enumerator.Current;
-
-                if (argToken.Value == ";")
-                    break;
-
-                if (argToken.Value == "{")
-                {
-                    blockOpened = true;
-                    break;
-                }
-
-                if (argToken.Value == "}")
-                {
-                    RecordError(configFile, result, filename, argToken.Line,
-                                "unexpected \"}\"", options);
-                    return;
-                }
-
-                if (argToken.Value.StartsWith('#'))
-                {
-                    if (options.Comments)
-                    {
-                        blocks.Add(new ConfigBlock
-                        {
-                            Directive = "#",
-                            Line = argToken.Line,
-                            Args = new List<string>(),
-                            Comment = argToken.Value[1..].TrimStart()
-                        });
-                    }
-                    // treat comment as end of current directive (no semicolon)
-                    break;
-                }
-
-                block.Args.Add(argToken.IsQuoted
-                    ? $"\"{argToken.Value}\""
-                    : argToken.Value);
-            }
-
-            if (blockOpened)
-            {
-                block.Block = new List<ConfigBlock>();
-                ParseNestedBlock(enumerator, block.Block, configFile, result, options, filename, depth + 1);
-            }
-
-            // ── Handle include directives ─────────────────────────────────────
-            if (block.Directive.Equals("include", StringComparison.OrdinalIgnoreCase)
-                && options.ParseIncludes
-                && block.Args.Count > 0)
-            {
-                string pattern = block.Args[0].Trim('"', '\'');
-                block.Includes = new List<ConfigFile>();
-                ResolveIncludes(pattern, filename, block.Includes, result, options);
-            }
-
-            blocks.Add(block);
-        }
-    }
-
-    private void ResolveIncludes(
-        string pattern,
-        string currentFile,
-        List<ConfigFile> includes,
-        ParseResult result,
-        ParseOptions options)
-    {
-        // Resolve relative to the directory of the current file
-        string baseDir = Path.GetDirectoryName(Path.GetFullPath(currentFile))
-                         ?? Directory.GetCurrentDirectory();
-
-        string fullPattern = Path.IsPathRooted(pattern)
-            ? pattern
-            : Path.Combine(baseDir, pattern);
-
-        string? dir = Path.GetDirectoryName(fullPattern);
-        string filePattern = Path.GetFileName(fullPattern);
-
-        if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir))
-            return;
-
-        foreach (string file in Directory.GetFiles(dir, filePattern).OrderBy(f => f))
-        {
-            var includedFile = new ConfigFile { File = file };
+            IEnumerable<NgxToken> tokens;
             try
             {
-                IEnumerable<NgxToken> tokens = _lexer.Tokenize(file);
-                using var enumerator = tokens.GetEnumerator();
-                ParseBlock(enumerator, includedFile, result, options, file, depth: 0);
+                tokens = _lexer.Tokenize(fname).ToList();   // materialise so balance-brace runs eagerly
             }
             catch (Exception ex)
             {
-                var error = new ParseError { Error = ex.Message, File = file, Line = 0 };
-                includedFile.Errors.Add(error);
-                result.Errors.Add(error);
-                includedFile.Status = "failed";
+                HandleError(parsing, payload, fname, ex, options);
+                payload.Config.Add(parsing);
+                continue;
             }
 
-            includes.Add(includedFile);
-            result.Config.Add(includedFile);
+            try
+            {
+                parsing.Parsed = ParseBlock(
+                    parsing, payload, (List<(string, IReadOnlyList<string>)>)includes,
+                    included, configDir, options,
+                    tokens.GetEnumerator(), ctx);
+            }
+            catch (Exception ex)
+            {
+                HandleError(parsing, payload, fname, ex, options);
+            }
+
+            payload.Config.Add(parsing);
+        }
+
+        return options.Combine ? CombineConfigs(payload) : payload;
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Core recursive parser  (mirrors Python _parse)
+    // ──────────────────────────────────────────────────────────────────────────
+
+    private List<ConfigBlock> ParseBlock(
+        ConfigFile parsing,
+        ParseResult payload,
+        List<(string File, IReadOnlyList<string> Ctx)> includes,
+        Dictionary<string, int> included,
+        string configDir,
+        ParseOptions options,
+        IEnumerator<NgxToken> tokens,
+        IReadOnlyList<string> ctx,
+        bool consume = false)
+    {
+        var parsed = new List<ConfigBlock>();
+
+        while (tokens.MoveNext())
+        {
+            var (tok, lineno, quoted) = (tokens.Current.Value, tokens.Current.Line, tokens.Current.IsQuoted);
+            var commentsInArgs = new List<string>();
+
+            // closing brace → end of block
+            if (tok == "}" && !quoted) break;
+
+            // consume mode: swallow everything, descend into nested blocks
+            if (consume)
+            {
+                if (tok == "{" && !quoted)
+                    ParseBlock(parsing, payload, includes, included, configDir, options,
+                               tokens, ctx, consume: true);
+                continue;
+            }
+
+            string directive = tok;
+            var stmt = new ConfigBlock
+            {
+                Directive = directive,
+                Line = lineno,
+                Args = new List<string>()
+            };
+            if (options.Combine)
+                stmt.File = parsing.File;
+
+            // comment token
+            if (directive.StartsWith('#') && !quoted)
+            {
+                if (options.Comments)
+                {
+                    stmt.Directive = "#";
+                    stmt.Comment = tok[1..];
+                    parsed.Add(stmt);
+                }
+                continue;
+            }
+
+            // collect arguments until ; or { or }
+            string term = ";";
+            while (tokens.MoveNext())
+            {
+                var arg = tokens.Current;
+                if (!arg.IsQuoted && (arg.Value == ";" || arg.Value == "{" || arg.Value == "}"))
+                {
+                    term = arg.Value;
+                    break;
+                }
+                if (arg.Value.StartsWith('#') && !arg.IsQuoted)
+                    commentsInArgs.Add(arg.Value[1..]);
+                else
+                    stmt.Args.Add(arg.Value);
+            }
+
+            // skip ignored directives
+            if (options.Ignore.Contains(directive))
+            {
+                if (term == "{")
+                    ParseBlock(parsing, payload, includes, included, configDir, options,
+                               tokens, ctx, consume: true);
+                continue;
+            }
+
+            // strip parens from "if (…)" args
+            if (directive == "if")
+                PrepareIfArgs(stmt.Args);
+
+            // validate
+            try
+            {
+                NginxAnalyzer.Analyze(
+                    parsing.File, directive, lineno, stmt.Args, term, ctx,
+                    options.Strict, options.CheckCtx, options.CheckArgs);
+            }
+            catch (NgxParserDirectiveError ex)
+            {
+                if (options.CatchErrors)
+                {
+                    HandleError(parsing, payload, parsing.File, ex, options);
+                    if (ex.Strerror.EndsWith(" is not terminated by \";\""))
+                    {
+                        if (term != "}" && !quoted)
+                            ParseBlock(parsing, payload, includes, included, configDir, options,
+                                       tokens, ctx, consume: true);
+                        else break;
+                    }
+                    continue;
+                }
+                throw;
+            }
+
+            // handle include directives
+            if (!options.Single && directive == "include" && stmt.Args.Count > 0)
+            {
+                stmt.Includes = new List<int>();
+                string pattern = stmt.Args[0];
+                if (!Path.IsPathRooted(pattern))
+                    pattern = Path.Combine(configDir, pattern);
+
+                List<string> fnames;
+                if (HasGlobMagic(pattern))
+                {
+                    string dir2 = Path.GetDirectoryName(pattern) ?? ".";
+                    string fileGlob = Path.GetFileName(pattern);
+                    fnames = Directory.Exists(dir2)
+                        ? Directory.GetFiles(dir2, fileGlob).OrderBy(f => f).ToList()
+                        : new List<string>();
+                }
+                else
+                {
+                    try { File.OpenRead(pattern).Dispose(); fnames = [pattern]; }
+                    catch (Exception ex)
+                    {
+                        fnames = new List<string>();
+                        var wrapped = new IOException(ex.Message);
+                        if (options.CatchErrors)
+                            HandleError(parsing, payload, parsing.File, wrapped, options);
+                        else throw;
+                    }
+                }
+
+                foreach (var incFile in fnames)
+                {
+                    string absInc = Path.GetFullPath(incFile);
+                    if (!included.ContainsKey(absInc))
+                    {
+                        included[absInc] = includes.Count;
+                        includes.Add((absInc, ctx));
+                    }
+                    stmt.Includes.Add(included[absInc]);
+                }
+            }
+
+            // recurse into block
+            if (term == "{")
+            {
+                var inner = NginxAnalyzer.EnterBlockCtx(directive, ctx);
+                stmt.Block = ParseBlock(parsing, payload, includes, included,
+                                        configDir, options, tokens, inner);
+            }
+
+            parsed.Add(stmt);
+
+            // emit any inline comments that were inside the arg list
+            foreach (var c in commentsInArgs)
+                parsed.Add(new ConfigBlock { Directive = "#", Line = lineno, Args = new(), Comment = c });
+        }
+
+        return parsed;
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Combine mode  (mirrors Python _combine_parsed_configs)
+    // ──────────────────────────────────────────────────────────────────────────
+
+    private static ParseResult CombineConfigs(ParseResult old)
+    {
+        var oldConfigs = old.Config;
+
+        IEnumerable<ConfigBlock> PerformIncludes(IEnumerable<ConfigBlock> block)
+        {
+            foreach (var stmt in block)
+            {
+                if (stmt.Block != null)
+                    stmt.Block = PerformIncludes(stmt.Block).ToList();
+
+                if (stmt.Includes != null)
+                {
+                    foreach (var idx in stmt.Includes)
+                    {
+                        var config = oldConfigs[idx].Parsed;
+                        foreach (var s in PerformIncludes(config))
+                            yield return s;
+                    }
+                }
+                else
+                {
+                    yield return stmt;
+                }
+            }
+        }
+
+        var combined = new ConfigFile
+        {
+            File = oldConfigs[0].File,
+            Status = "ok",
+            Errors = oldConfigs.SelectMany(c => c.Errors).ToList(),
+            Parsed = PerformIncludes(oldConfigs[0].Parsed).ToList()
+        };
+
+        if (oldConfigs.Any(c => c.Status == "failed"))
+            combined.Status = "failed";
+
+        return new ParseResult
+        {
+            Status = old.Status,
+            Errors = old.Errors,
+            Config = [combined]
+        };
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Helpers
+    // ──────────────────────────────────────────────────────────────────────────
+
+    private static void HandleError(
+        ConfigFile parsing, ParseResult payload,
+        string? fname, Exception ex, ParseOptions options)
+    {
+        int? line = (ex as NgxParserBaseException)?.Lineno;
+        var err = new ParseError
+        {
+            Error = ex.Message,
+            File = fname,
+            Line = line,
+            Callback = options.OnError?.Invoke(ex)
+        };
+        parsing.Errors.Add(new ParseError { Error = ex.Message, Line = line });
+        parsing.Status = "failed";
+        payload.Errors.Add(err);
+        payload.Status = "failed";
+    }
+
+    /// <summary>Strips outer parentheses from <c>if (…)</c> args. Mirrors Python _prepare_if_args.</summary>
+    private static void PrepareIfArgs(List<string> args)
+    {
+        if (args.Count == 0) return;
+        if (args[0].StartsWith('(') && args[^1].EndsWith(')'))
+        {
+            args[0] = args[0][1..].TrimStart();
+            args[^1] = args[^1][..^1].TrimEnd();
+            int start = args[0].Length == 0 ? 1 : 0;
+            int end = args[^1].Length == 0 ? args.Count - 1 : args.Count;
+            var trimmed = args.GetRange(start, end - start);
+            args.Clear();
+            args.AddRange(trimmed);
         }
     }
 
-    private void RecordError(
-        ConfigFile configFile,
-        ParseResult result,
-        string filename,
-        int line,
-        string message,
-        ParseOptions options)
-    {
-        var error = new ParseError { Error = message, File = filename, Line = line };
-        configFile.Errors.Add(error);
-        result.Errors.Add(error);
-        configFile.Status = "failed";
-        result.Status = "failed";
-
-        if (!options.CatchErrors)
-            throw new NgxParserSyntaxError();
-    }
+    private static bool HasGlobMagic(string pattern) =>
+        pattern.Contains('*') || pattern.Contains('?') || pattern.Contains('[');
 }
