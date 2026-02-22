@@ -1,6 +1,6 @@
 # CrossplaneSharp
 
-A faithful C# port of the Python [crossplane](https://github.com/nginxinc/crossplane) library — a fast, reliable NGINX configuration file **lexer**, **parser**, and **builder** packaged as a .NET 8 NuGet library.
+A C# port of the Python [crossplane](https://github.com/nginxinc/crossplane) library — a fast, reliable NGINX configuration file **lexer**, **parser**, and **builder** packaged as a .NET 10 NuGet library.
 
 ---
 
@@ -249,10 +249,4 @@ CrossplaneSharp/
 ## Requirements
 
 - .NET 10.0+
-
----
-
-## License
-
-MIT
 
