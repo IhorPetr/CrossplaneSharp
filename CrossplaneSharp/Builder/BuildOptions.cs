@@ -1,4 +1,5 @@
-namespace CrossplaneSharp;
+namespace CrossplaneSharp
+{
 
 /// <summary>
 /// Controls the output format of <see cref="NginxBuilder.Build"/>.
@@ -23,4 +24,5 @@ public class BuildOptions
     /// Equivalent to Python <c>header</c>. Default: <c>false</c>.
     /// </summary>
     public bool Header { get; set; } = false;
+}
 }

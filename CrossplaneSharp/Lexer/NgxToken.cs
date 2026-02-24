@@ -1,4 +1,5 @@
-namespace CrossplaneSharp;
+namespace CrossplaneSharp
+{
 
 /// <summary>
 /// A single token produced by <see cref="NginxLexer"/>.
@@ -23,4 +24,5 @@ public sealed class NgxToken
     }
 
     public override string ToString() => $"NgxToken({Value}, line={Line}, quoted={IsQuoted})";
+}
 }

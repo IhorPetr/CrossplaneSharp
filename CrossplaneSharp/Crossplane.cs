@@ -1,4 +1,8 @@
-namespace CrossplaneSharp;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+
+namespace CrossplaneSharp
+{
 
 /// <summary>
 /// Top-level entry point for the CrossplaneSharp library.
@@ -21,7 +25,7 @@ public static class Crossplane
         new NginxLexer().Lex(filename);
 
     /// <summary>Tokenises an in-memory config string.</summary>
-    public static IReadOnlyList<NgxToken> LexString(string content, string? filename = null) =>
+    public static IReadOnlyList<NgxToken> LexString(string content, string filename = null) =>
         new NginxLexer().LexString(content, filename);
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -33,7 +37,7 @@ public static class Crossplane
     /// <see cref="ParseResult"/>.
     /// Equivalent to Python <c>crossplane.parse(filename, …)</c>.
     /// </summary>
-    public static ParseResult Parse(string filename, ParseOptions? options = null) =>
+    public static ParseResult Parse(string filename, ParseOptions options = null) =>
         new NginxParser().Parse(filename, options);
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -44,7 +48,7 @@ public static class Crossplane
     /// Reconstructs an NGINX config string from <paramref name="block"/>.
     /// Equivalent to Python <c>crossplane.build(payload, …)</c>.
     /// </summary>
-    public static string Build(IEnumerable<ConfigBlock> block, BuildOptions? options = null) =>
+    public static string Build(IEnumerable<ConfigBlock> block, BuildOptions options = null) =>
         new NginxBuilder().Build(block, options);
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -55,6 +59,7 @@ public static class Crossplane
     /// Writes each config entry from <paramref name="payload"/> to disk.
     /// Equivalent to Python <c>crossplane.build_files(payload, …)</c>.
     /// </summary>
-    public static void BuildFiles(ParseResult payload, string? dirname = null, BuildOptions? options = null) =>
+    public static void BuildFiles(ParseResult payload, string dirname = null, BuildOptions options = null) =>
         new NginxBuilder().BuildFiles(payload, dirname, options);
+}
 }

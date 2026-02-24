@@ -437,11 +437,11 @@ public class ParserTests
     [Test]
     public void Combine_MergesIncludedStatements()
     {
-        var r        = new NginxParser().Parse(Fix("includes-regular/nginx.conf"),
+        var r= new NginxParser().Parse(Fix("includes-regular/nginx.conf"),
             new ParseOptions { Combine = true });
         var allNames = Flatten(r.Config[0].Parsed).Select(s => s.Directive).ToList();
-        Assert.That(allNames, Does.Contain("server"));
-        Assert.That(allNames, Does.Contain("location"));
+        Assert.That(allNames, Contains.Item("server"));
+        Assert.That(allNames, Contains.Item("location"));
     }
 
     // ── ignore option ──────────────────────────────────────────────────────

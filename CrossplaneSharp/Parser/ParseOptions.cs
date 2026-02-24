@@ -1,4 +1,8 @@
-namespace CrossplaneSharp;
+using System;
+using System.Collections.Generic;
+
+namespace CrossplaneSharp
+{
 
 /// <summary>
 /// Controls the behaviour of <see cref="NginxParser.Parse"/>.
@@ -59,5 +63,6 @@ public class ParseOptions
     /// The return value is stored in <see cref="ParseError.Callback"/>.
     /// Equivalent to Python <c>onerror</c>.
     /// </summary>
-    public Func<Exception, object?>? OnError { get; set; }
+    public Func<Exception, object> OnError { get; set; }
+}
 }

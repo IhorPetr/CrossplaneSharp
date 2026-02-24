@@ -25,6 +25,8 @@ All three operations are exposed through the single static `Crossplane` class, m
 dotnet add package CrossplaneSharp
 ```
 
+The package targets **`netstandard2.0`** and works with .NET 6+, .NET Framework 4.6.1+, .NET Core 2.0+, Mono, Xamarin, and Unity.
+
 ---
 
 ## Quick Start
@@ -248,5 +250,18 @@ CrossplaneSharp/
 
 ## Requirements
 
-- .NET 10.0+
+The library targets **`netstandard2.0`**, so it is compatible with any runtime that supports .NET Standard 2.0:
+
+| Runtime | Minimum version |
+|---|---|
+| .NET | 6.0+ |
+| .NET Framework | 4.6.1+ |
+| .NET Core | 2.0+ |
+| Mono | 5.4+ |
+| Xamarin.iOS | 10.14+ |
+| Xamarin.Android | 8.0+ |
+| Unity | 2018.1+ |
+
+The compiler feature set uses **C# 10** (file-scoped namespaces, record types, nullable reference types).  
+Any modern .NET SDK (6+) can build and consume the package regardless of which runtime you target.
 

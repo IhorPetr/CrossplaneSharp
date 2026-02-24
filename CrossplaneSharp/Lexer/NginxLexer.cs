@@ -1,7 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text;
 using CrossplaneSharp.Exceptions;
 
-namespace CrossplaneSharp;
+namespace CrossplaneSharp
+{
 
 /// <summary>
 /// Tokenises an NGINX configuration file into a stream of <see cref="NgxToken"/> values.
@@ -26,7 +31,7 @@ public class NginxLexer
     /// <summary>
     /// Tokenises an in-memory config string. Used by tests and the parser.
     /// </summary>
-    public IReadOnlyList<NgxToken> LexString(string content, string? filename = null)
+    public IReadOnlyList<NgxToken> LexString(string content, string filename = null)
         => LexContent(content, filename).ToList();
 
     /// <summary>
@@ -42,14 +47,14 @@ public class NginxLexer
     /// <summary>
     /// Alias for <see cref="LexString"/> — tokenises an in-memory config string.
     /// </summary>
-    public IEnumerable<NgxToken> TokenizeContent(string content, string? filename = null)
+    public IEnumerable<NgxToken> TokenizeContent(string content, string filename = null)
         => LexContent(content, filename);
 
     // -------------------------------------------------------------------------
     // Core implementation – mirrors _lex_file_object → _balance_braces → lex
     // -------------------------------------------------------------------------
 
-    private static IEnumerable<NgxToken> LexContent(string text, string? filename)
+    private static IEnumerable<NgxToken> LexContent(string text, string filename)
     {
         var raw = LexFileObject(text);
         return BalanceBraces(raw, filename);
@@ -113,9 +118,9 @@ public class NginxLexer
             // ── variable expansion: ${var} ────────────────────────────────────
             // When the last char of the buffer is $ and next char is {,
             // keep reading until we close with }
-            if (tokenBuf.Length > 0 && tokenBuf[^1] == '$' && ch == "{")
+            if (tokenBuf.Length > 0 && tokenBuf[tokenBuf.Length - 1] == '$' && ch == "{")
             {
-                while (pos < chars.Count && tokenBuf[^1] != '}' && !IsSpace(chars[pos].Ch))
+                while (pos < chars.Count && tokenBuf[tokenBuf.Length - 1] != '}' && !IsSpace(chars[pos].Ch))
                 {
                     tokenBuf += chars[pos].Ch;
                     pos++;
@@ -181,7 +186,13 @@ public class NginxLexer
 
     // -------------------------------------------------------------------------
 
-    private readonly record struct CharEntry(string Ch, int Line);
+    private struct CharEntry
+    {
+        public string Ch;
+        public int Line;
+        public CharEntry(string ch, int line) { Ch = ch; Line = line; }
+        public void Deconstruct(out string ch, out int line) { ch = Ch; line = Line; }
+    }
 
     /// <summary>
     /// Mirrors Python <c>_iterescape</c> + <c>_iterlinecount</c>:
@@ -218,10 +229,10 @@ public class NginxLexer
     /// <summary>
     /// Mirrors Python <c>_balance_braces</c>: raises on unbalanced { }.
     /// </summary>
-    private static IEnumerable<NgxToken> BalanceBraces(IEnumerable<NgxToken> tokens, string? filename)
+    private static IEnumerable<NgxToken> BalanceBraces(IEnumerable<NgxToken> tokens, string filename)
     {
         int depth = 0;
-        NgxToken? last = null;
+        NgxToken last = null;
 
         foreach (var t in tokens)
         {
@@ -243,4 +254,5 @@ public class NginxLexer
     }
 
     private static bool IsSpace(string s) => s.Length == 1 && char.IsWhiteSpace(s[0]);
+}
 }

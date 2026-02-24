@@ -1,6 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using CrossplaneSharp.Exceptions;
 
-namespace CrossplaneSharp;
+namespace CrossplaneSharp
+{
 
 /// <summary>
 /// Parses one or more NGINX configuration files into a <see cref="ParseResult"/>.
@@ -9,7 +14,7 @@ namespace CrossplaneSharp;
 /// </summary>
 public class NginxParser
 {
-    private readonly NginxLexer _lexer = new();
+    private readonly NginxLexer _lexer = new NginxLexer();
 
     // ──────────────────────────────────────────────────────────────────────────
     // Public API
@@ -19,9 +24,9 @@ public class NginxParser
     /// Parses the NGINX config at <paramref name="filename"/>.
     /// Mirrors Python <c>crossplane.parse(filename, …)</c>.
     /// </summary>
-    public ParseResult Parse(string filename, ParseOptions? options = null)
+    public ParseResult Parse(string filename, ParseOptions options = null)
     {
-        options ??= new ParseOptions();
+        options = options ?? new ParseOptions();
         filename = Path.GetFullPath(filename);
         string configDir = Path.GetDirectoryName(filename) ?? Directory.GetCurrentDirectory();
 
@@ -115,12 +120,12 @@ public class NginxParser
                 stmt.File = parsing.File;
 
             // comment token
-            if (directive.StartsWith('#') && !quoted)
+            if (directive.StartsWith("#") && !quoted)
             {
                 if (options.Comments)
                 {
                     stmt.Directive = "#";
-                    stmt.Comment = tok[1..];
+                    stmt.Comment = tok.Substring(1);
                     parsed.Add(stmt);
                 }
                 continue;
@@ -136,8 +141,8 @@ public class NginxParser
                     term = arg.Value;
                     break;
                 }
-                if (arg.Value.StartsWith('#') && !arg.IsQuoted)
-                    commentsInArgs.Add(arg.Value[1..]);
+                if (arg.Value.StartsWith("#") && !arg.IsQuoted)
+                    commentsInArgs.Add(arg.Value.Substring(1));
                 else
                     stmt.Args.Add(arg.Value);
             }
@@ -198,7 +203,7 @@ public class NginxParser
                 }
                 else
                 {
-                    try { File.OpenRead(pattern).Dispose(); fnames = [pattern]; }
+                    try { File.OpenRead(pattern).Dispose(); fnames = new List<string> { pattern }; }
                     catch (Exception ex)
                     {
                         fnames = new List<string>();
@@ -233,7 +238,7 @@ public class NginxParser
 
             // emit any inline comments that were inside the arg list
             foreach (var c in commentsInArgs)
-                parsed.Add(new ConfigBlock { Directive = "#", Line = lineno, Args = new(), Comment = c });
+                parsed.Add(new ConfigBlock { Directive = "#", Line = lineno, Args = new List<string>(), Comment = c });
         }
 
         return parsed;
@@ -285,7 +290,7 @@ public class NginxParser
         {
             Status = old.Status,
             Errors = old.Errors,
-            Config = [combined]
+            Config = new List<ConfigFile> { combined }
         };
     }
 
@@ -295,7 +300,7 @@ public class NginxParser
 
     private static void HandleError(
         ConfigFile parsing, ParseResult payload,
-        string? fname, Exception ex, ParseOptions options)
+        string fname, Exception ex, ParseOptions options)
     {
         int? line = (ex as NgxParserBaseException)?.Lineno;
         var err = new ParseError
@@ -315,12 +320,13 @@ public class NginxParser
     private static void PrepareIfArgs(List<string> args)
     {
         if (args.Count == 0) return;
-        if (args[0].StartsWith('(') && args[^1].EndsWith(')'))
+        int last = args.Count - 1;
+        if (args[0].StartsWith("(") && args[last].EndsWith(")"))
         {
-            args[0] = args[0][1..].TrimStart();
-            args[^1] = args[^1][..^1].TrimEnd();
+            args[0]    = args[0].Substring(1).TrimStart();
+            args[last] = args[last].Substring(0, args[last].Length - 1).TrimEnd();
             int start = args[0].Length == 0 ? 1 : 0;
-            int end = args[^1].Length == 0 ? args.Count - 1 : args.Count;
+            int end   = args[last].Length == 0 ? args.Count - 1 : args.Count;
             var trimmed = args.GetRange(start, end - start);
             args.Clear();
             args.AddRange(trimmed);
@@ -328,5 +334,6 @@ public class NginxParser
     }
 
     private static bool HasGlobMagic(string pattern) =>
-        pattern.Contains('*') || pattern.Contains('?') || pattern.Contains('[');
+        pattern.IndexOf('*') >= 0 || pattern.IndexOf('?') >= 0 || pattern.IndexOf('[') >= 0;
+}
 }
