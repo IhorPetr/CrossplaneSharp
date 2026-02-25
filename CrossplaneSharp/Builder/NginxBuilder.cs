@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -52,8 +51,11 @@ namespace CrossplaneSharp
             foreach (var config in payload.Config)
             {
                 string path = config.File;
-                if (!Path.IsPathRooted(path))
-                    path = Path.Combine(dirname, path);
+                // Normalise separators so forward-slash paths work on Windows
+                if (!PathHelper.IsPathRooted(path))
+                    path = PathHelper.Combine(dirname, path);
+                else
+                    path = PathHelper.ToNative(path);
 
                 string dirPath = Path.GetDirectoryName(path);
                 if (!string.IsNullOrEmpty(dirPath) && !Directory.Exists(dirPath))

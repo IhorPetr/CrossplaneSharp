@@ -7,7 +7,8 @@ namespace CrossplaneSharp.UnitTests;
 public class LexerTests
 {
     private static string Fix(string sub) =>
-        Path.Combine(TestContext.CurrentContext.TestDirectory, "nginx", sub);
+        Path.Combine(TestContext.CurrentContext.TestDirectory, "nginx",
+            sub.Replace('/', Path.DirectorySeparatorChar));
 
     private static List<NgxToken> Lex(string content) =>
         new NginxLexer().TokenizeContent(content).ToList();

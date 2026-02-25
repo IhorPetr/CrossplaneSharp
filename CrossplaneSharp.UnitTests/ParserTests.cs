@@ -7,7 +7,8 @@ namespace CrossplaneSharp.UnitTests;
 public class ParserTests
 {
     private static string Fix(string sub) =>
-        Path.Combine(TestContext.CurrentContext.TestDirectory, "nginx", sub);
+        Path.Combine(TestContext.CurrentContext.TestDirectory, "nginx",
+            sub.Replace('/', Path.DirectorySeparatorChar));
 
     private static ParseResult Parse(string content, ParseOptions? opts = null)
     {

@@ -6,7 +6,8 @@ namespace CrossplaneSharp.UnitTests;
 public class BuilderTests
 {
     private static string Fix(string sub) =>
-        Path.Combine(TestContext.CurrentContext.TestDirectory, "nginx", sub);
+        Path.Combine(TestContext.CurrentContext.TestDirectory, "nginx",
+            sub.Replace('/', Path.DirectorySeparatorChar));
 
     private static string Build(List<ConfigBlock> blocks, BuildOptions? opts = null) =>
         new NginxBuilder().Build(blocks, opts);
@@ -268,18 +269,19 @@ public class BuilderTests
         Directory.CreateDirectory(dir);
         try
         {
+            var outPath = Path.Combine(dir, "out.conf");
             var payload = new ParseResult
             {
                 Status = "ok",
                 Config = [new ConfigFile
                 {
-                    File   = Path.Combine(dir, "out.conf"),
+                    File   = outPath,
                     Status = "ok",
                     Parsed = [new ConfigBlock { Directive = "worker_processes", Args = ["2"] }]
                 }]
             };
             new NginxBuilder().BuildFiles(payload);
-            var written = File.ReadAllText(Path.Combine(dir, "out.conf"));
+            var written = File.ReadAllText(outPath);
             Assert.That(written.Trim(), Is.EqualTo("worker_processes 2;"));
         }
         finally { Directory.Delete(dir, recursive: true); }
@@ -291,18 +293,19 @@ public class BuilderTests
         var dir = Path.Combine(Path.GetTempPath(), $"ngx_{Guid.NewGuid():N}");
         try
         {
+            var outPath = Path.Combine(dir, "sub", "out.conf");
             var payload = new ParseResult
             {
                 Status = "ok",
                 Config = [new ConfigFile
                 {
-                    File   = Path.Combine(dir, "sub", "out.conf"),
+                    File   = outPath,
                     Status = "ok",
                     Parsed = [new ConfigBlock { Directive = "daemon", Args = ["off"] }]
                 }]
             };
             new NginxBuilder().BuildFiles(payload);
-            Assert.That(File.Exists(Path.Combine(dir, "sub", "out.conf")), Is.True);
+            Assert.That(File.Exists(outPath), Is.True);
         }
         finally { if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true); }
     }
