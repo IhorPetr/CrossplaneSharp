@@ -13,6 +13,10 @@ jobs:
     name: Build & Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
 
+    permissions:
+      checks: write
+      pull-requests: write
+
     strategy:
       fail-fast: false
       matrix:
@@ -44,4 +48,12 @@ jobs:
           name: test-results-${{ matrix.os }}
           path: "**/*.trx"
           retention-days: 7
+
+      - name: Publish Test Report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: NUnit Tests (${{ matrix.os }})
+          path: "**/TestResults/*.trx"
+          reporter: dotnet-trx
 
