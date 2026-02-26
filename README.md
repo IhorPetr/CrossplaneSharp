@@ -1,9 +1,6 @@
 # CrossplaneSharp
 
 [![CI](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml)
-[![CI (Ubuntu)](https://img.shields.io/github/actions/workflow/status/IhorPetr/CrossplaneSharp/ci.yml?branch=main&label=ubuntu&logo=ubuntu)](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml)
-[![CI (macOS)](https://img.shields.io/github/actions/workflow/status/IhorPetr/CrossplaneSharp/ci.yml?branch=main&label=macos&logo=apple)](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml)
-[![CI (Windows)](https://img.shields.io/github/actions/workflow/status/IhorPetr/CrossplaneSharp/ci.yml?branch=main&label=windows&logo=windows)](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A C# port of the Python [crossplane](https://github.com/nginxinc/crossplane) library — a fast, reliable NGINX configuration file **lexer**, **parser**, and **builder** packaged as a .NET Standard 2.0 NuGet library.
@@ -223,36 +220,6 @@ NgxParserBaseException
 
 ---
 
-## Project structure
-
-```
-CrossplaneSharp/
-├── Crossplane.cs                 ← Static facade (Lex, Parse, Build, BuildFiles)
-├── Lexer/
-│   ├── NginxLexer.cs             ← Tokeniser (port of Python lexer.py)
-│   └── NgxToken.cs               ← Token: Value, Line, IsQuoted
-├── Parser/
-│   ├── NginxParser.cs            ← Parser (port of Python parser.py)
-│   ├── ConfigBlock.cs            ← Single directive / statement node
-│   ├── ConfigFile.cs             ← Per-file parse result
-│   ├── ParseResult.cs            ← Top-level payload
-│   ├── ParseError.cs             ← Error entry
-│   └── ParseOptions.cs           ← All parse options
-├── Builder/
-│   ├── NginxBuilder.cs           ← Builder (port of Python builder.py)
-│   └── BuildOptions.cs           ← Build options (Indent, Tabs, Header)
-├── Analyzer/
-│   └── NginxAnalyzer.cs          ← Directive validation + full DIRECTIVES map
-└── Exceptions/
-    ├── NgxParserBaseException.cs
-    ├── NgxParserSyntaxError.cs
-    ├── NgxParserDirectiveError.cs
-    ├── NgxParserDirectiveArgumentsError.cs
-    ├── NgxParserDirectiveContextError.cs
-    └── NgxParserDirectiveUnknownError.cs
-```
-
----
 
 ## Requirements
 
