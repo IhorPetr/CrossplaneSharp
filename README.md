@@ -1,6 +1,9 @@
 # CrossplaneSharp
 
 [![CI](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml)
+[![Ubuntu](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml/badge.svg?branch=main&jobName=Build+%26+Test+%28ubuntu-latest%29)](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml)
+[![macOS](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml/badge.svg?branch=main&jobName=Build+%26+Test+%28macos-latest%29)](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml)
+[![Windows](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml/badge.svg?branch=main&jobName=Build+%26+Test+%28windows-latest%29)](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A C# port of the Python [crossplane](https://github.com/nginxinc/crossplane) library — a fast, reliable NGINX configuration file **lexer**, **parser**, and **builder** packaged as a .NET Standard 2.0 NuGet library.
