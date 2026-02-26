@@ -1,27 +1,21 @@
-name: CI
+name: CI (Common)
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
 
 jobs:
   build-and-test:
-    name: Build & Test (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+    name: Build & Test (${{ inputs.os }})
+    runs-on: ${{ inputs.os }}
 
     permissions:
       contents: read
       checks: write
       pull-requests: write
-
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
       - name: Checkout repository
@@ -30,8 +24,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            8.0.x
+          dotnet-version: 8.0.x
 
       - name: Restore dependencies
         run: dotnet restore CrossplaneSharp.sln
@@ -46,15 +39,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.os }}
+          name: test-results-${{ inputs.os }}
           path: "**/*.trx"
           retention-days: 7
-
-      - name: Publish Test Report
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: NUnit Tests (${{ matrix.os }})
-          path: "**/TestResults/*.trx"
-          reporter: dotnet-trx
-
