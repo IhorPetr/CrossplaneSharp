@@ -1,6 +1,13 @@
 # CrossplaneSharp
 
-A C# port of the Python [crossplane](https://github.com/nginxinc/crossplane) library — a fast, reliable NGINX configuration file **lexer**, **parser**, and **builder** packaged as a .NET 10 NuGet library.
+[![CI](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml)
+[![CI (Ubuntu)](https://img.shields.io/github/actions/workflow/status/IhorPetr/CrossplaneSharp/ci.yml?branch=main&label=ubuntu&logo=ubuntu)](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml)
+[![CI (macOS)](https://img.shields.io/github/actions/workflow/status/IhorPetr/CrossplaneSharp/ci.yml?branch=main&label=macos&logo=apple)](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml)
+[![CI (Windows)](https://img.shields.io/github/actions/workflow/status/IhorPetr/CrossplaneSharp/ci.yml?branch=main&label=windows&logo=windows)](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml)
+[![NuGet](https://img.shields.io/nuget/v/CrossplaneSharp.svg?logo=nuget)](https://www.nuget.org/packages/CrossplaneSharp)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+A C# port of the Python [crossplane](https://github.com/nginxinc/crossplane) library — a fast, reliable NGINX configuration file **lexer**, **parser**, and **builder** packaged as a .NET Standard 2.0 NuGet library.
 
 ---
 
