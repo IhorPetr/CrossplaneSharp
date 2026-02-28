@@ -1,9 +1,8 @@
 # CrossplaneSharp
 
 [![CI](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A C# port of the Python [crossplane](https://github.com/nginxinc/crossplane) library — a fast, reliable NGINX configuration file **lexer**, **parser**, and **builder** packaged as a .NET Standard 2.0 NuGet library.
+A Unofficial C# port of the Python [crossplane](https://github.com/nginxinc/crossplane) library — a fast, reliable NGINX configuration file **lexer**, **parser**, and **builder** packaged as a .NET Standard 2.0 NuGet library.
 
 ---
 
@@ -235,6 +234,4 @@ The library targets **`netstandard2.0`**, so it is compatible with any runtime t
 | Xamarin.Android | 8.0+ |
 | Unity | 2018.1+ |
 
-The compiler feature set uses **C# 10** (file-scoped namespaces, record types, nullable reference types).  
-Any modern .NET SDK (6+) can build and consume the package regardless of which runtime you target.
 
