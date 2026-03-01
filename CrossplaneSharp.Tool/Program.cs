@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using CrossplaneSharp;
@@ -17,7 +18,14 @@ using CrossplaneSharp;
 //   format   <file>  [options]   format an nginx config
 // ─────────────────────────────────────────────────────────────────────────────
 
-const string ToolVersion = "1.0.0";
+static string GetVersion() =>
+    typeof(Program).Assembly
+                   .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+                   ?.InformationalVersion
+                   // strip git-hash suffix added by the .NET SDK (e.g. "1.2.3+abc1234")
+                   ?.Split('+')[0]
+    ?? typeof(Program).Assembly.GetName().Version?.ToString()
+    ?? "unknown";
 
 if (args.Length == 0 || args[0] is "-h" or "--help")
 {
@@ -27,7 +35,7 @@ if (args.Length == 0 || args[0] is "-h" or "--help")
 
 if (args[0] is "-V" or "--version")
 {
-    Console.WriteLine($"crossplane-sharp {ToolVersion}");
+    Console.WriteLine($"crossplane-sharp {GetVersion()}");
     return 0;
 }
 
@@ -553,7 +561,7 @@ static string Enquote(string arg)
 
 static void PrintMainHelp()
 {
-    Console.WriteLine($"crossplane-sharp {ToolVersion}");
+    Console.WriteLine($"crossplane-sharp {GetVersion()}");
     Console.WriteLine();
     Console.WriteLine("usage: crossplane-sharp <command> [options]");
     Console.WriteLine();
