@@ -1,6 +1,8 @@
 # CrossplaneSharp
 
 [![CI](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml)
+[![NuGet](https://img.shields.io/nuget/v/CrossplaneSharp.svg?label=CrossplaneSharp)](https://www.nuget.org/packages/CrossplaneSharp)
+[![NuGet Tool](https://img.shields.io/nuget/v/CrossplaneSharp.Tool.svg?label=CrossplaneSharp.Tool)](https://www.nuget.org/packages/CrossplaneSharp.Tool)
 
 A Unofficial C# port of the Python [crossplane](https://github.com/nginxinc/crossplane) library — a fast, reliable NGINX configuration file **lexer**, **parser**, and **builder** packaged as a .NET Standard 2.0 NuGet library.
 
@@ -28,6 +30,110 @@ dotnet add package CrossplaneSharp
 ```
 
 The package targets **`netstandard2.0`** and works with .NET 6+, .NET Framework 4.6.1+, .NET Core 2.0+, Mono, Xamarin, and Unity.
+
+---
+
+## CLI Tool
+
+A standalone `crossplane-sharp` CLI tool is also available as a separate NuGet package:
+
+```bash
+dotnet tool install -g CrossplaneSharp.Tool
+```
+
+The tool mirrors all five subcommands of the Python `crossplane` CLI:
+
+```
+crossplane-sharp <command> [options]
+
+commands:
+  parse    parses a json payload for an nginx config
+  build    builds an nginx config from a json payload
+  lex      lexes tokens from an nginx config file
+  minify   removes all whitespace from an nginx config
+  format   formats an nginx config file
+  help     show help for commands
+```
+
+### parse
+
+```bash
+# Parse to JSON (stdout)
+crossplane-sharp parse /etc/nginx/nginx.conf
+
+# Indented output, save to file
+crossplane-sharp parse /etc/nginx/nginx.conf -i 4 -o payload.json
+
+# Include comments, don't follow includes, strict mode
+crossplane-sharp parse nginx.conf --include-comments --single-file --strict
+
+# All options:
+#   -o / --out <path>         write output to a file
+#   -i / --indent <num>       number of spaces to indent output
+#       --ignore <directives> ignore directives (comma-separated)
+#       --no-catch            stop after first error
+#       --combine             flatten includes into one config
+#       --single-file         do not follow include directives
+#       --include-comments    include comments in JSON
+#       --strict              raise errors for unknown directives
+```
+
+### build
+
+```bash
+# Build config files from a JSON payload onto disk
+crossplane-sharp build payload.json -d /etc/nginx/
+
+# Print to stdout instead of writing files
+crossplane-sharp build payload.json --stdout
+
+# Force overwrite, use tabs, omit header, verbose
+crossplane-sharp build payload.json -f -t --no-headers -v
+
+# All options:
+#   -v / --verbose            verbose output (print written paths)
+#   -d / --dir <path>         base directory to build in
+#   -f / --force              overwrite existing files without prompting
+#   -i / --indent <num>       spaces per indent level (default 4)
+#   -t / --tabs               indent with tabs
+#       --no-headers          omit the "built by crossplane" header
+#       --stdout              print to stdout instead of writing files
+```
+
+### lex
+
+```bash
+# Tokenise to a JSON array
+crossplane-sharp lex /etc/nginx/nginx.conf
+
+# Include line numbers
+crossplane-sharp lex /etc/nginx/nginx.conf -n -i 2
+
+# All options:
+#   -o / --out <path>         write output to a file
+#   -i / --indent <num>       number of spaces to indent output
+#   -n / --line-numbers       include line numbers in JSON
+```
+
+### minify
+
+```bash
+# Strip all whitespace / comments
+crossplane-sharp minify /etc/nginx/nginx.conf
+
+# Save to file
+crossplane-sharp minify /etc/nginx/nginx.conf -o nginx.min.conf
+```
+
+### format
+
+```bash
+# Format with 4-space indent (default)
+crossplane-sharp format /etc/nginx/nginx.conf
+
+# Format with tabs, save to file
+crossplane-sharp format /etc/nginx/nginx.conf -t -o nginx.formatted.conf
+```
 
 ---
 

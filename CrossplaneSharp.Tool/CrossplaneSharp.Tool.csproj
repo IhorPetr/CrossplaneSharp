@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+
+        <!-- .NET global / local tool -->
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>crossplane-sharp</ToolCommandName>
+
+        <!-- NuGet metadata -->
+        <PackageId>CrossplaneSharp.Tool</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>IhorPetr</Authors>
+        <Description>CLI tool for parsing, lexing, building, formatting and minifying NGINX configs — a C# port of the Python crossplane CLI.</Description>
+        <PackageTags>nginx;crossplane;config;parser;lexer;builder;tool;cli</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/IhorPetr/CrossplaneSharp</RepositoryUrl>
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\CrossplaneSharp\CrossplaneSharp.csproj" />
+    </ItemGroup>
+
+</Project>
+
