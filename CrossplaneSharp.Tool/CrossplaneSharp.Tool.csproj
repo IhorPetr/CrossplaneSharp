@@ -15,7 +15,7 @@
         <PackageId>CrossplaneSharp.Tool</PackageId>
         <Version>1.0.0</Version>
         <Authors>IhorPetr</Authors>
-        <Description>CLI tool for parsing, lexing, building, formatting and minifying NGINX configs — a C# port of the Python crossplane CLI.</Description>
+        <Description>CLI tool for parsing, lexing, building, formatting and minifying NGINX configs.</Description>
         <PackageTags>nginx;crossplane;config;parser;lexer;builder;tool;cli</PackageTags>
         <RepositoryUrl>https://github.com/IhorPetr/CrossplaneSharp</RepositoryUrl>
         <PackageProjectUrl>https://github.com/IhorPetr/CrossplaneSharp</PackageProjectUrl>
@@ -25,11 +25,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\CrossplaneSharp\CrossplaneSharp.csproj" />
+        <None Include="..\docs\README.tool.md" Pack="true" PackagePath="\README.md" />
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="../README.md" Pack="true" PackagePath="\" />
+        <ProjectReference Include="..\CrossplaneSharp\CrossplaneSharp.csproj" />
+        <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     </ItemGroup>
 
 </Project>

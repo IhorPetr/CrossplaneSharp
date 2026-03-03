@@ -7,8 +7,7 @@ namespace CrossplaneSharp
 {
 
     /// <summary>
-    /// Validates nginx directives: context and argument-count.
-    /// C# port of Python crossplane <c>analyzer.py</c>.
+    /// Validates NGINX directives: context rules and argument-count constraints.
     /// </summary>
     public static class NginxAnalyzer
     {
@@ -56,7 +55,7 @@ namespace CrossplaneSharp
             NGX_STREAM_MAIN_CONF | NGX_STREAM_SRV_CONF | NGX_STREAM_UPS_CONF |
             NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF | NGX_HTTP_UPS_CONF;
 
-        // ─── context map (mirrors Python CONTEXTS dict) ───────────────────────────
+        // ─── context map ─────────────────────────────────────────────────────────
         /// <summary>Maps context tuple (joined with "|") → location bitmask.</summary>
         public static readonly IReadOnlyDictionary<string, uint> Contexts =
             new Dictionary<string, uint>
@@ -80,7 +79,7 @@ namespace CrossplaneSharp
         // ─── directive map  ───────────────────────────────────────────────────────
         /// <summary>
         /// Maps directive name → list of valid bitmasks.
-        /// Mirrors Python DIRECTIVES dict. Each mask combines location + arg-style bits.
+        /// Each mask combines location bits with argument-style bits.
         /// </summary>
         public static readonly Dictionary<string, uint[]> Directives =
             new Dictionary<string, uint[]>(StringComparer.Ordinal)
@@ -481,7 +480,7 @@ namespace CrossplaneSharp
                 ["sticky"]                    = new uint[] { NGX_HTTP_UPS_CONF|NGX_CONF_1MORE },
             };
 
-        // ─── External directive registration (mirrors Python's register_external_directives) ──
+        // ─── External directive registration ─────────────────────────────────────
         public static void RegisterDirectives(Dictionary<string, uint[]> directives)
         {
             foreach (var kvp in directives)
@@ -495,7 +494,6 @@ namespace CrossplaneSharp
 
         /// <summary>
         /// Computes the child context after entering a block directive.
-        /// Mirrors Python <c>enter_block_ctx</c>.
         /// </summary>
         public static IReadOnlyList<string> EnterBlockCtx(string directive, IReadOnlyList<string> ctx)
         {
@@ -510,7 +508,6 @@ namespace CrossplaneSharp
         // ─── analyze() ───────────────────────────────────────────────────────────
         /// <summary>
         /// Validates <paramref name="directive"/> in <paramref name="ctx"/>.
-        /// Mirrors Python <c>analyze()</c>.
         /// </summary>
         public static void Analyze(
             string fname,

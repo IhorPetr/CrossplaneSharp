@@ -77,7 +77,7 @@ namespace CrossplaneSharp
         }
 
         // ──────────────────────────────────────────────────────────────────────────
-        // Core recursive parser  (mirrors Python _parse)
+        // Core recursive parser
         // ──────────────────────────────────────────────────────────────────────────
 
         private List<ConfigBlock> ParseBlock(
@@ -249,7 +249,7 @@ namespace CrossplaneSharp
         }
 
         // ──────────────────────────────────────────────────────────────────────────
-        // Combine mode  (mirrors Python _combine_parsed_configs)
+        // Combine mode
         // ──────────────────────────────────────────────────────────────────────────
 
         private static ParseResult CombineConfigs(ParseResult old)

@@ -5,7 +5,6 @@ namespace CrossplaneSharp
 
     /// <summary>
     /// Top-level result returned by <see cref="NginxParser.Parse"/>.
-    /// Mirrors the Python crossplane <c>parse()</c> output structure.
     /// </summary>
     public class ParseResult
     {

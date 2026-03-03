@@ -5,7 +5,6 @@ namespace CrossplaneSharp
 
     /// <summary>
     /// Represents a single directive (and optional nested block) in an NGINX config.
-    /// Mirrors the Python crossplane statement dict: directive/line/args/block/comment/includes/file.
     /// </summary>
     public class ConfigBlock
     {
@@ -26,7 +25,7 @@ namespace CrossplaneSharp
 
         /// <summary>
         /// Indices into <see cref="ParseResult.Config"/> for files pulled in by
-        /// an <c>include</c> directive (mirrors Python stmt['includes']).
+        /// an <c>include</c> directive.
         /// </summary>
         public List<int> Includes { get; set; }
 

@@ -8,7 +8,7 @@
         <PackageId>CrossplaneSharp</PackageId>
         <Version>1.0.0</Version>
         <Authors>IhorPetr</Authors>
-        <Description>C# implementation of the Python crossplane NGINX config parser/lexer/builder. Targets netstandard2.0 — compatible with .NET 6+, .NET Framework 4.6.1+, .NET Core 2.0+, Mono, Xamarin and Unity.</Description>
+        <Description>NGINX configuration file lexer, parser, and builder for .NET. Targets netstandard2.0 — compatible with .NET 6+, .NET Framework 4.6.1+, .NET Core 2.0+, Mono, Xamarin and Unity.</Description>
         <PackageTags>nginx;crossplane;config;parser;lexer;builder</PackageTags>
         <RepositoryUrl>https://github.com/IhorPetr/CrossplaneSharp</RepositoryUrl>
         <PackageProjectUrl>https://github.com/IhorPetr/CrossplaneSharp</PackageProjectUrl>
@@ -24,7 +24,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="../README.md" Pack="true" PackagePath="\" />
+        <None Include="../docs/README.library.md" Pack="true" PackagePath="\README.md" />
     </ItemGroup>
 
 </Project>

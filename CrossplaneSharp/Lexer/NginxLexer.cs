@@ -9,7 +9,6 @@ namespace CrossplaneSharp
 
     /// <summary>
     /// Tokenises an NGINX configuration file into a stream of <see cref="NgxToken"/> values.
-    /// C# port of Python crossplane <c>lexer.py</c>.
     /// </summary>
     public class NginxLexer
     {
@@ -50,7 +49,7 @@ namespace CrossplaneSharp
             => LexContent(content, filename);
 
         // -------------------------------------------------------------------------
-        // Core implementation – mirrors _lex_file_object → _balance_braces → lex
+        // Core implementation
         // -------------------------------------------------------------------------
 
         private static IEnumerable<NgxToken> LexContent(string text, string filename)
@@ -60,8 +59,7 @@ namespace CrossplaneSharp
         }
 
         /// <summary>
-        /// Main tokeniser. Mirrors Python <c>_lex_file_object</c>.
-        /// Handles:
+        /// Main tokeniser. Handles:
         ///   • whitespace (skip / flush buffer)
         ///   • comments  (#…\n)
         ///   • quoted strings (single or double, with escape handling)
@@ -72,7 +70,6 @@ namespace CrossplaneSharp
         private static IEnumerable<NgxToken> LexFileObject(string text)
         {
             // Build a list of (singleCharOrEscapePair, lineNumber).
-            // This mirrors Python's chain(file_obj) → _iterescape → _iterlinecount.
             var chars = BuildCharStream(text);
             int pos = 0;
 

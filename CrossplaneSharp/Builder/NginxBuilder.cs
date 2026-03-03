@@ -7,9 +7,9 @@ namespace CrossplaneSharp
 {
 
     /// <summary>
-    /// Reconstructs an NGINX configuration string from a list of <see cref="ConfigBlock"/> directives.
-    /// C# port of Python crossplane <c>builder.py</c> — including <c>_enquote</c>,
-    /// <c>if(…)</c> syntax, same-line inline comments, optional header, and <c>BuildFiles</c>.
+    /// Reconstructs an NGINX configuration string from a list of <see cref="ConfigBlock"/> directives,
+    /// including <c>_enquote</c>, <c>if(…)</c> syntax, same-line inline comments,
+    /// optional header, and <c>BuildFiles</c>.
     /// </summary>
     public class NginxBuilder
     {
@@ -19,7 +19,6 @@ namespace CrossplaneSharp
 
         /// <summary>
         /// Builds an NGINX config string from <paramref name="block"/>.
-        /// Equivalent to Python <c>crossplane.build(payload, …)</c>.
         /// </summary>
         public string Build(IEnumerable<ConfigBlock> block, BuildOptions options = null)
         {
@@ -41,7 +40,6 @@ namespace CrossplaneSharp
 
         /// <summary>
         /// Writes each config entry from <paramref name="payload"/> to disk.
-        /// Equivalent to Python <c>crossplane.build_files(payload, …)</c>.
         /// </summary>
         public void BuildFiles(ParseResult payload, string dirname = null, BuildOptions options = null)
         {
@@ -67,7 +65,7 @@ namespace CrossplaneSharp
         }
 
         // ──────────────────────────────────────────────────────────────────────────
-        // Core block builder  (mirrors Python _build_block)
+        // Core block builder
         // ──────────────────────────────────────────────────────────────────────────
 
         private static string BuildBlock(
@@ -126,13 +124,13 @@ namespace CrossplaneSharp
         }
 
         // ──────────────────────────────────────────────────────────────────────────
-        // _enquote  (mirrors Python builder._enquote / _needs_quotes)
+        // _enquote
         // ──────────────────────────────────────────────────────────────────────────
 
         private static string Enquote(string arg)
         {
             if (!NeedsQuotes(arg)) return arg;
-            // repr-like: use JSON-style escaping (mirrors Python repr().replace('\\\\','\\'))
+            // use JSON-style escaping with simplified backslash handling
             string r = System.Text.Json.JsonSerializer.Serialize(arg);
             r = r.Replace("\\\\", "\\");
             return r;
@@ -165,7 +163,7 @@ namespace CrossplaneSharp
             return last == "\\" || last == "$" || expanding;
         }
 
-        /// <summary>Mirrors Python builder._escape generator.</summary>
+        /// <summary>Yields escape-aware character chunks for quoting analysis.</summary>
         private static IEnumerable<string> Escape(string s)
         {
             string prev = "", cur = "";
