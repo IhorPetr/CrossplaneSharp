@@ -8,44 +8,46 @@ namespace CrossplaneSharp.Tool.Commands
         {
             var cmd = new Command("format", "Format an NGINX config file.");
 
-            var file    = new Argument<FileInfo>("filename", "The NGINX config file.") { Arity = ArgumentArity.ExactlyOne };
-            var outFile = new Option<FileInfo?>(new[] { "-o", "--out" }, "Write output to a file.");
-            var indent  = new Option<int>(new[] { "-i", "--indent" }, () => 4, "Spaces per indent level.");
-            var tabs    = new Option<bool>(new[] { "-t", "--tabs" }, "Indent with tabs instead of spaces.");
+            var file    = new Argument<FileInfo>("filename") { Description = "The NGINX config file.", Arity = ArgumentArity.ExactlyOne };
+            var outFile = new Option<FileInfo?>("-o", ["--out"]) { Description = "Write output to a file." };
+            var indent  = new Option<int>("-i", ["--indent"]) { Description = "Spaces per indent level.", DefaultValueFactory = _ => 4 };
+            var tabs    = new Option<bool>("-t", ["--tabs"]) { Description = "Indent with tabs instead of spaces." };
 
-            cmd.AddArgument(file);
-            cmd.AddOption(outFile);
-            cmd.AddOption(indent);
-            cmd.AddOption(tabs);
+            cmd.Add(file);
+            cmd.Add(outFile);
+            cmd.Add(indent);
+            cmd.Add(tabs);
 
-            cmd.SetHandler(
-                (FileInfo f, FileInfo? o, int ind, bool t) =>
+            cmd.SetAction(ctx =>
+            {
+                var f   = ctx.GetRequiredValue(file);
+                var o   = ctx.GetValue(outFile);
+                var ind = ctx.GetValue(indent);
+                var t   = ctx.GetValue(tabs);
+
+                ParseResult payload = Crossplane.Parse(f.FullName, new ParseOptions
                 {
-                    ParseResult payload = Crossplane.Parse(f.FullName, new ParseOptions
-                    {
-                        Comments  = true,
-                        Single    = true,
-                        CheckCtx  = false,
-                        CheckArgs = false,
-                    });
+                    Comments  = true,
+                    Single    = true,
+                    CheckCtx  = false,
+                    CheckArgs = false,
+                });
 
-                    if (payload.Status != "ok")
-                    {
-                        var e = payload.Errors[0];
-                        Console.Error.WriteLine(
-                            $"crossplane-sharp: error: {e.File ?? f.FullName}:{e.Line}: {e.Error}");
-                        Environment.Exit(1);
-                        return;
-                    }
+                if (payload.Status != "ok")
+                {
+                    var e = payload.Errors[0];
+                    Console.Error.WriteLine(
+                        $"crossplane-sharp: error: {e.File ?? f.FullName}:{e.Line}: {e.Error}");
+                    Environment.Exit(1);
+                    return;
+                }
 
-                    string output = Crossplane.Build(payload.Config[0].Parsed,
-                        new BuildOptions { Indent = ind, Tabs = t, Header = false });
-                    Helpers.WriteOutput(output + "\n", o?.FullName);
-                },
-                file, outFile, indent, tabs);
+                string output = Crossplane.Build(payload.Config[0].Parsed,
+                    new BuildOptions { Indent = ind, Tabs = t, Header = false });
+                Helpers.WriteOutput(output + "\n", o?.FullName);
+            });
 
             return cmd;
         }
     }
 }
-

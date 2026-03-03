@@ -1,5 +1,9 @@
+using System.Collections.Generic;
 using System.CommandLine;
+using System.IO;
+using System.Linq;
 using System.Text;
+using CrossplaneSharp;
 
 namespace CrossplaneSharp.Tool.Commands
 {
@@ -9,28 +13,29 @@ namespace CrossplaneSharp.Tool.Commands
         {
             var cmd = new Command("minify", "Remove all whitespace from an NGINX config.");
 
-            var file    = new Argument<FileInfo>("filename", "The NGINX config file.") { Arity = ArgumentArity.ExactlyOne };
-            var outFile = new Option<FileInfo?>(new[] { "-o", "--out" }, "Write output to a file.");
+            var file    = new Argument<FileInfo>("filename") { Description = "The NGINX config file.", Arity = ArgumentArity.ExactlyOne };
+            var outFile = new Option<FileInfo?>("-o", ["--out"]) { Description = "Write output to a file." };
 
-            cmd.AddArgument(file);
-            cmd.AddOption(outFile);
+            cmd.Add(file);
+            cmd.Add(outFile);
 
-            cmd.SetHandler(
-                (FileInfo f, FileInfo? o) =>
+            cmd.SetAction(ctx =>
+            {
+                var f = ctx.GetRequiredValue(file);
+                var o = ctx.GetValue(outFile);
+
+                var opts = new ParseOptions
                 {
-                    var opts = new ParseOptions
-                    {
-                        Single      = true,
-                        CatchErrors = false,
-                        CheckCtx    = false,
-                        CheckArgs   = false,
-                        Comments    = false,
-                        Strict      = false,
-                    };
-                    ParseResult payload = Crossplane.Parse(f.FullName, opts);
-                    Helpers.WriteOutput(BuildMinified(payload.Config[0].Parsed) + "\n", o?.FullName);
-                },
-                file, outFile);
+                    Single      = true,
+                    CatchErrors = false,
+                    CheckCtx    = false,
+                    CheckArgs   = false,
+                    Comments    = false,
+                    Strict      = false,
+                };
+                ParseResult payload = Crossplane.Parse(f.FullName, opts);
+                Helpers.WriteOutput(BuildMinified(payload.Config[0].Parsed) + "\n", o?.FullName);
+            });
 
             return cmd;
         }
@@ -74,4 +79,3 @@ namespace CrossplaneSharp.Tool.Commands
         }
     }
 }
-

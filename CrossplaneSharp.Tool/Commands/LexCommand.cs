@@ -1,4 +1,7 @@
 using System.CommandLine;
+using System.IO;
+using System.Linq;
+using CrossplaneSharp;
 
 namespace CrossplaneSharp.Tool.Commands
 {
@@ -8,29 +11,31 @@ namespace CrossplaneSharp.Tool.Commands
         {
             var cmd = new Command("lex", "Tokenise an NGINX config file to a JSON array.");
 
-            var file      = new Argument<FileInfo>("filename", "The NGINX config file.") { Arity = ArgumentArity.ExactlyOne };
-            var outFile   = new Option<FileInfo?>(new[] { "-o", "--out" }, "Write output to a file.");
-            var indent    = new Option<int?>(new[] { "-i", "--indent" }, "Number of spaces to indent output.");
-            var lineNos   = new Option<bool>(new[] { "-n", "--line-numbers" }, "Include line numbers in JSON.");
+            var file    = new Argument<FileInfo>("filename") { Description = "The NGINX config file.", Arity = ArgumentArity.ExactlyOne };
+            var outFile = new Option<FileInfo?>("-o", ["--out"]) { Description = "Write output to a file." };
+            var indent  = new Option<int?>("-i", ["--indent"]) { Description = "Number of spaces to indent output." };
+            var lineNos = new Option<bool>("-n", ["--line-numbers"]) { Description = "Include line numbers in JSON." };
 
-            cmd.AddArgument(file);
-            cmd.AddOption(outFile);
-            cmd.AddOption(indent);
-            cmd.AddOption(lineNos);
+            cmd.Add(file);
+            cmd.Add(outFile);
+            cmd.Add(indent);
+            cmd.Add(lineNos);
 
-            cmd.SetHandler(
-                (FileInfo f, FileInfo? o, int? ind, bool lineNumbers) =>
-                {
-                    var tokens = Crossplane.Lex(f.FullName);
-                    string json = lineNumbers
-                        ? Helpers.SerializeJson(tokens.Select(t => new object[] { t.Value, t.Line }).ToList(), ind ?? -1)
-                        : Helpers.SerializeJson(tokens.Select(t => t.Value).ToList(), ind ?? -1);
-                    Helpers.WriteOutput(json + "\n", o?.FullName);
-                },
-                file, outFile, indent, lineNos);
+            cmd.SetAction(ctx =>
+            {
+                var f           = ctx.GetRequiredValue(file);
+                var o           = ctx.GetValue(outFile);
+                var ind         = ctx.GetValue(indent);
+                var lineNumbers = ctx.GetValue(lineNos);
+
+                var tokens = Crossplane.Lex(f.FullName);
+                string json = lineNumbers
+                    ? Helpers.SerializeJson(tokens.Select(t => new object[] { t.Value, t.Line }).ToList(), ind ?? -1)
+                    : Helpers.SerializeJson(tokens.Select(t => t.Value).ToList(), ind ?? -1);
+                Helpers.WriteOutput(json + "\n", o?.FullName);
+            });
 
             return cmd;
         }
     }
 }
-

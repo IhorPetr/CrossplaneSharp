@@ -1,5 +1,4 @@
 using System.CommandLine;
-using System.CommandLine.Invocation;
 
 namespace CrossplaneSharp.Tool.Commands
 {
@@ -9,44 +8,44 @@ namespace CrossplaneSharp.Tool.Commands
         {
             var cmd = new Command("parse", "Parse an NGINX config file to a JSON payload.");
 
-            var file     = new Argument<FileInfo>("filename", "The NGINX config file.") { Arity = ArgumentArity.ExactlyOne };
-            var outFile  = new Option<FileInfo?>(new[] { "-o", "--out" }, "Write output to a file.");
-            var indent   = new Option<int?>(new[] { "-i", "--indent" }, "Number of spaces to indent output.");
-            var ignore   = new Option<string>("--ignore", () => "", "Ignore directives (comma-separated).");
-            var noCatch  = new Option<bool>("--no-catch", "Stop after the first error.");
-            var combine  = new Option<bool>("--combine", "Flatten includes into one single config entry.");
-            var single   = new Option<bool>("--single-file", "Do not follow include directives.");
-            var comments = new Option<bool>("--include-comments", "Include comments in JSON output.");
-            var strict   = new Option<bool>("--strict", "Raise errors for unknown directives.");
+            var file     = new Argument<FileInfo>("filename") { Description = "The NGINX config file.", Arity = ArgumentArity.ExactlyOne };
+            var outFile  = new Option<FileInfo?>("-o", ["--out" ]) { Description = "Write output to a file." };
+            var indent   = new Option<int?>("-i", ["--indent"]) { Description = "Number of spaces to indent output." };
+            var ignore   = new Option<string>("--ignore") { Description = "Ignore directives (comma-separated).", DefaultValueFactory = _ => "" };
+            var noCatch  = new Option<bool>("--no-catch") { Description = "Stop after the first error." };
+            var combine  = new Option<bool>("--combine") { Description = "Flatten includes into one single config entry." };
+            var single   = new Option<bool>("--single-file") { Description = "Do not follow include directives." };
+            var comments = new Option<bool>("--include-comments") { Description = "Include comments in JSON output." };
+            var strict   = new Option<bool>("--strict") { Description = "Raise errors for unknown directives." };
 
-            cmd.AddArgument(file);
-            cmd.AddOption(outFile);
-            cmd.AddOption(indent);
-            cmd.AddOption(ignore);
-            cmd.AddOption(noCatch);
-            cmd.AddOption(combine);
-            cmd.AddOption(single);
-            cmd.AddOption(comments);
-            cmd.AddOption(strict);
+            cmd.Add(file);
+            cmd.Add(outFile);
+            cmd.Add(indent);
+            cmd.Add(ignore);
+            cmd.Add(noCatch);
+            cmd.Add(combine);
+            cmd.Add(single);
+            cmd.Add(comments);
+            cmd.Add(strict);
 
-            cmd.SetHandler((InvocationContext ctx) =>
+            cmd.SetAction(ctx =>
             {
-                var f        = ctx.ParseResult.GetValueForArgument(file);
-                var o        = ctx.ParseResult.GetValueForOption(outFile);
-                var ind      = ctx.ParseResult.GetValueForOption(indent);
-                var ign      = ctx.ParseResult.GetValueForOption(ignore) ?? "";
-                var noCatchV = ctx.ParseResult.GetValueForOption(noCatch);
-                var combineV = ctx.ParseResult.GetValueForOption(combine);
-                var singleV  = ctx.ParseResult.GetValueForOption(single);
-                var commentsV= ctx.ParseResult.GetValueForOption(comments);
-                var strictV  = ctx.ParseResult.GetValueForOption(strict);
+                var f         = ctx.GetRequiredValue(file);
+                var o         = ctx.GetValue(outFile);
+                var ind       = ctx.GetValue(indent);
+                var ign       = ctx.GetValue(ignore) ?? "";
+                var noCatchV  = ctx.GetValue(noCatch);
+                var combineV  = ctx.GetValue(combine);
+                var singleV   = ctx.GetValue(single);
+                var commentsV = ctx.GetValue(comments);
+                var strictV   = ctx.GetValue(strict);
 
                 var options = new ParseOptions
                 {
                     CatchErrors = !noCatchV,
                     Ignore      = new HashSet<string>(
                                       ign.Split(new[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries),
-                                      System.StringComparer.Ordinal),
+                                      StringComparer.Ordinal),
                     Single   = singleV,
                     Comments = commentsV,
                     Strict   = strictV,

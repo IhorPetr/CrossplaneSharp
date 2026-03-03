@@ -5,15 +5,12 @@ using CrossplaneSharp.Tool.Commands;
 // crossplane-sharp  –  CLI tool for working with NGINX configuration files
 // ─────────────────────────────────────────────────────────────────────────────
 
-var rootCommand = new RootCommand("Various operations for NGINX config files.")
-{
-    Name = "crossplane-sharp"
-};
+var rootCommand = new RootCommand("Various operations for NGINX config files.");
 
-rootCommand.AddCommand(ParseCommand.Build());
-rootCommand.AddCommand(BuildCommand.Build());
-rootCommand.AddCommand(LexCommand.Build());
-rootCommand.AddCommand(MinifyCommand.Build());
-rootCommand.AddCommand(FormatCommand.Build());
+rootCommand.Add(ParseCommand.Build());
+rootCommand.Add(BuildCommand.Build());
+rootCommand.Add(LexCommand.Build());
+rootCommand.Add(MinifyCommand.Build());
+rootCommand.Add(FormatCommand.Build());
 
-return await rootCommand.InvokeAsync(args);
+return await rootCommand.Parse(args).InvokeAsync();
