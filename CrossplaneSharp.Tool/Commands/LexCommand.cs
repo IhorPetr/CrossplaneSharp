@@ -20,9 +20,9 @@ namespace CrossplaneSharp.Tool.Commands
 
             cmd.SetAction(ctx =>
             {
-                var f           = ctx.GetRequiredValue(file);
-                var o           = ctx.GetValue(outFile);
-                var ind         = ctx.GetValue(indent);
+                var f         = ctx.GetRequiredValue(file);
+                var o        = ctx.GetValue(outFile);
+                var ind          = ctx.GetValue(indent);
                 var lineNumbers = ctx.GetValue(lineNos);
 
                 var tokens = Crossplane.Lex(f.FullName);

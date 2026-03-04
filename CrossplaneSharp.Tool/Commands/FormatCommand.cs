@@ -20,10 +20,10 @@ namespace CrossplaneSharp.Tool.Commands
 
             cmd.SetAction(ctx =>
             {
-                var f   = ctx.GetRequiredValue(file);
+                var f    = ctx.GetRequiredValue(file);
                 var o   = ctx.GetValue(outFile);
-                var ind = ctx.GetValue(indent);
-                var t   = ctx.GetValue(tabs);
+                var ind      = ctx.GetValue(indent);
+                var t      = ctx.GetValue(tabs);
 
                 ParseResult payload = Crossplane.Parse(f.FullName, new ParseOptions
                 {

@@ -46,10 +46,10 @@ namespace CrossplaneSharp.Tool.Commands
                     Ignore      = new HashSet<string>(
                                       ign.Split(new[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries),
                                       StringComparer.Ordinal),
-                    Single   = singleV,
-                    Comments = commentsV,
-                    Strict   = strictV,
-                    Combine  = combineV,
+                    Single      = singleV,
+                    Comments    = commentsV,
+                    Strict      = strictV,
+                    Combine     = combineV,
                 };
 
                 ParseResult result = Crossplane.Parse(f.FullName, options);

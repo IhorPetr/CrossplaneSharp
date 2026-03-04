@@ -29,13 +29,13 @@ namespace CrossplaneSharp.Tool.Commands
             cmd.SetAction(ctx =>
             {
                 var f         = ctx.GetRequiredValue(file);
-                var verboseV  = ctx.GetValue(verbose);
-                var dirV      = ctx.GetValue(dir);
-                var forceV    = ctx.GetValue(force);
-                var indentV   = ctx.GetValue(indent);
-                var tabsV     = ctx.GetValue(tabs);
-                var noHdrV    = ctx.GetValue(noHeaders);
-                var stdoutV   = ctx.GetValue(stdout);
+                var verboseV    = ctx.GetValue(verbose);
+                var dirV = ctx.GetValue(dir);
+                var forceV      = ctx.GetValue(force);
+                var indentV       = ctx.GetValue(indent);
+                var tabsV       = ctx.GetValue(tabs);
+                var noHdrV      = ctx.GetValue(noHeaders);
+                var stdoutV     = ctx.GetValue(stdout);
 
                 string json = File.ReadAllText(f.FullName);
                 ParseResult payload = Helpers.DeserializeParseResult(json);
