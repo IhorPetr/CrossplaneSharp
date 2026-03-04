@@ -13,7 +13,7 @@ A unofficial C# port of the Python [crossplane](https://github.com/nginxinc/cros
 | Package | Description | Docs |
 |---------|-------------|------|
 | [`CrossplaneSharp`](https://www.nuget.org/packages/CrossplaneSharp) | .NET Standard 2.0 library — use in your own projects | [docs/README.library.md](docs/README.library.md) |
-| [`CrossplaneSharp.Tool`](https://www.nuget.org/packages/CrossplaneSharp.Tool) | `crossplane-sharp` global CLI tool | [docs/README.tool.md](docs/README.tool.md) |
+| [`CrossplaneSharp.Tool`](https://www.nuget.org/packages/CrossplaneSharp.Tool) | `crossplanesharp` global CLI tool | [docs/README.tool.md](docs/README.tool.md) |
 
 ---
 
@@ -47,11 +47,11 @@ dotnet tool install -g CrossplaneSharp.Tool
 ```
 
 ```bash
-crossplane-sharp parse /etc/nginx/nginx.conf -i 4
-crossplane-sharp lex   /etc/nginx/nginx.conf -n
-crossplane-sharp minify /etc/nginx/nginx.conf
-crossplane-sharp format /etc/nginx/nginx.conf
-crossplane-sharp build  payload.json -d /etc/nginx/
+crossplanesharp parse /etc/nginx/nginx.conf -i 4
+crossplanesharp lex   /etc/nginx/nginx.conf -n
+crossplanesharp minify /etc/nginx/nginx.conf
+crossplanesharp format /etc/nginx/nginx.conf
+crossplanesharp build  payload.json -d /etc/nginx/
 ```
 
 ➡ **Full tool documentation:** [docs/README.tool.md](docs/README.tool.md)

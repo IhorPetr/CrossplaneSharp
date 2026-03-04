@@ -2,7 +2,7 @@ using System.CommandLine;
 using CrossplaneSharp.Tool.Commands;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// crossplane-sharp  –  CLI tool for working with NGINX configuration files
+// crossplanesharp  –  CLI tool for working with NGINX configuration files
 // ─────────────────────────────────────────────────────────────────────────────
 
 var rootCommand = new RootCommand("Various operations for NGINX config files.");

@@ -9,7 +9,7 @@
 
         <!-- .NET global / local tool -->
         <PackAsTool>true</PackAsTool>
-        <ToolCommandName>crossplane-sharp</ToolCommandName>
+        <ToolCommandName>crossplanesharp</ToolCommandName>
 
         <!-- NuGet metadata -->
         <PackageId>CrossplaneSharp.Tool</PackageId>

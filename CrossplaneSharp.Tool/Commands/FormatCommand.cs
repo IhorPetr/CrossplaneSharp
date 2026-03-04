@@ -37,7 +37,7 @@ namespace CrossplaneSharp.Tool.Commands
                 {
                     var e = payload.Errors[0];
                     Console.Error.WriteLine(
-                        $"crossplane-sharp: error: {e.File ?? f.FullName}:{e.Line}: {e.Error}");
+                        $"crossplanesharp: error: {e.File ?? f.FullName}:{e.Line}: {e.Error}");
                     Environment.Exit(1);
                     return;
                 }
