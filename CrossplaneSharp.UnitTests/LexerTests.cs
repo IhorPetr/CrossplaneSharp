@@ -1,4 +1,3 @@
-using CrossplaneSharp;
 using CrossplaneSharp.Exceptions;
 
 namespace CrossplaneSharp.UnitTests;

@@ -1,5 +1,3 @@
-using CrossplaneSharp;
-
 namespace CrossplaneSharp.UnitTests;
 
 [TestFixture]
