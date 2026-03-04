@@ -13,7 +13,7 @@
 
         <!-- NuGet metadata -->
         <PackageId>CrossplaneSharp.Tool</PackageId>
-        <Version>1.0.0</Version>
+        <Version>$(PackageVersion)</Version>
         <Authors>IhorPetr</Authors>
         <Description>CLI tool for parsing, lexing, building, formatting and minifying NGINX configs.</Description>
         <PackageTags>nginx;crossplane;config;parser;lexer;builder;tool;cli</PackageTags>
