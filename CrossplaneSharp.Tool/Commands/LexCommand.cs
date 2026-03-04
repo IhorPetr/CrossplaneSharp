@@ -1,7 +1,4 @@
 using System.CommandLine;
-using System.IO;
-using System.Linq;
-using CrossplaneSharp;
 
 namespace CrossplaneSharp.Tool.Commands
 {
