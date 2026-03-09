@@ -235,4 +235,78 @@ public class LexerTests
             ? "quoted-right-brace\\nginx.conf" : "quoted-right-brace/nginx.conf";
         Assert.DoesNotThrow(() => { var _ = Crossplane.Lex(Path.Combine(NginxDir, filePath)).ToList(); });
     }
+
+    // ── NginxLexer direct API ──────────────────────────────────────────────
+
+    [Test]
+    public void NginxLexer_Lex_ReturnsTokenList()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "simple\\nginx.conf" : "simple/nginx.conf";
+        var lexer = new NginxLexer();
+        var tokens = lexer.Lex(Path.Combine(NginxDir, filePath));
+        Assert.That(tokens, Is.Not.Empty);
+        Assert.That(tokens.Any(t => t.Value == "http"), Is.True);
+    }
+
+    [Test]
+    public void NginxLexer_LexString_ReturnsTokens()
+    {
+        var lexer = new NginxLexer();
+        var tokens = lexer.LexString("gzip on;");
+        Assert.That(tokens.Count, Is.EqualTo(3));
+        Assert.That(tokens[0].Value, Is.EqualTo("gzip"));
+    }
+
+    [Test]
+    public void NginxLexer_LexString_WithFilename_DoesNotThrow()
+    {
+        var lexer = new NginxLexer();
+        Assert.DoesNotThrow(() => lexer.LexString("worker_processes 2;", "test.conf"));
+    }
+
+    [Test]
+    public void NginxLexer_TokenizeContent_ReturnsLazySequence()
+    {
+        var lexer = new NginxLexer();
+        var tokens = lexer.TokenizeContent("server_name example.com;").ToList();
+        Assert.That(tokens.Any(t => t.Value == "server_name"), Is.True);
+    }
+
+    // ── Crossplane.Lex / LexString entry-points ───────────────────────────
+
+    [Test]
+    public void Crossplane_Lex_ReturnsTokensFromFile()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "simple\\nginx.conf" : "simple/nginx.conf";
+        var tokens = Crossplane.Lex(Path.Combine(NginxDir, filePath));
+        Assert.That(tokens, Is.Not.Empty);
+        Assert.That(tokens.Any(t => t.Value == "events"), Is.True);
+    }
+
+    [Test]
+    public void Crossplane_LexString_ReturnsTokensFromString()
+    {
+        var tokens = Crossplane.LexString("worker_processes 4;");
+        Assert.That(tokens.Count, Is.EqualTo(3));
+        Assert.That(tokens[0].Value, Is.EqualTo("worker_processes"));
+    }
+
+    [Test]
+    public void Crossplane_LexString_WithFilename_DoesNotThrow()
+    {
+        var tokens = Crossplane.LexString("pid /run/nginx.pid;", "virtual.conf");
+        Assert.That(tokens, Is.Not.Empty);
+    }
+
+    // ── NgxToken ──────────────────────────────────────────────────────────
+
+    [Test]
+    public void NgxToken_ToString_ContainsValue()
+    {
+        var token = new NgxToken("listen", 1, false);
+        var str = token.ToString();
+        Assert.That(str, Does.Contain("listen"));
+    }
 }

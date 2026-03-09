@@ -549,6 +549,129 @@ public class ParserTests
         Assert.That(r.Errors[0].Callback, Is.EqualTo("cb-result"));
     }
 
+    // ── NginxParser missing branches ──────────────────────────────────────
+
+    [Test]
+    public void Parser_MissingIncludeFile_CatchErrors_RecordsError()
+    {
+        var tmp = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(tmp, "http { include /nonexistent/path/missing.conf; }");
+            var r = Crossplane.Parse(tmp, new ParseOptions { CatchErrors = true });
+            Assert.That(r, Is.Not.Null);
+        }
+        finally { File.Delete(tmp); }
+    }
+
+    [Test]
+    public void Parser_Combine_SingleEntryWithFileProperty()
+    {
+        var tmp = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(tmp, "worker_processes 2;\nevents { worker_connections 1024; }");
+            var r = Crossplane.Parse(tmp, new ParseOptions { Combine = true });
+            Assert.That(r.Config, Has.Count.EqualTo(1));
+            Assert.That(r.Config[0].Parsed[0].File, Is.Not.Null);
+        }
+        finally { File.Delete(tmp); }
+    }
+
+    [Test]
+    public void Parser_StrictMode_UnknownDirective_ThrowsUnknownError()
+    {
+        var tmp = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(tmp, "totally_unknown_directive value;");
+            Assert.Throws<NgxParserDirectiveUnknownError>(() =>
+                Crossplane.Parse(tmp, new ParseOptions { Strict = true, CatchErrors = false }));
+        }
+        finally { File.Delete(tmp); }
+    }
+
+    // ── Exception constructors ────────────────────────────────────────────
+
+    [Test]
+    public void NgxParserBaseException_DefaultCtor_HasEmptyStrerror()
+    {
+        var ex = new NgxParserBaseException();
+        Assert.That(ex.Strerror, Is.EqualTo(""));
+    }
+
+    [Test]
+    public void NgxParserBaseException_FullCtor_SetsProperties()
+    {
+        var ex = new NgxParserBaseException("bad token", "nginx.conf", 42);
+        Assert.That(ex.Strerror, Is.EqualTo("bad token"));
+        Assert.That(ex.Filename, Is.EqualTo("nginx.conf"));
+        Assert.That(ex.Lineno,   Is.EqualTo(42));
+        Assert.That(ex.Message,  Does.Contain("nginx.conf:42"));
+    }
+
+    [Test]
+    public void NgxParserBaseException_NullLineno_MessageHasNoColon()
+    {
+        var ex = new NgxParserBaseException("error", "nginx.conf", null);
+        Assert.That(ex.Lineno,  Is.Null);
+        Assert.That(ex.Message, Does.Contain("nginx.conf"));
+        Assert.That(ex.Message, Does.Not.Contain(":"));
+    }
+
+    [Test]
+    public void NgxParserSyntaxError_DefaultCtor_DoesNotThrow()
+    {
+        var ex = new NgxParserSyntaxError();
+        Assert.That(ex, Is.Not.Null);
+        Assert.That(ex.Strerror, Is.EqualTo(""));
+    }
+
+    [Test]
+    public void NgxParserSyntaxError_FullCtor_SetsProperties()
+    {
+        var ex = new NgxParserSyntaxError("unexpected }", "nginx.conf", 10);
+        Assert.That(ex.Strerror, Is.EqualTo("unexpected }"));
+        Assert.That(ex.Lineno,   Is.EqualTo(10));
+    }
+
+    [Test]
+    public void NgxParserDirectiveError_DefaultCtor_DoesNotThrow()
+    {
+        var ex = new NgxParserDirectiveError();
+        Assert.That(ex, Is.Not.Null);
+        Assert.That(ex.Strerror, Is.EqualTo(""));
+    }
+
+    [Test]
+    public void NgxParserDirectiveError_FullCtor_SetsProperties()
+    {
+        var ex = new NgxParserDirectiveError("invalid directive", "nginx.conf", 5);
+        Assert.That(ex.Strerror, Is.EqualTo("invalid directive"));
+        Assert.That(ex.Filename, Is.EqualTo("nginx.conf"));
+    }
+
+    [Test]
+    public void NgxParserDirectiveArgumentsError_FullCtor_SetsProperties()
+    {
+        var ex = new NgxParserDirectiveArgumentsError("wrong args", "nginx.conf", 3);
+        Assert.That(ex.Strerror, Is.EqualTo("wrong args"));
+    }
+
+    [Test]
+    public void NgxParserDirectiveContextError_FullCtor_SetsProperties()
+    {
+        var ex = new NgxParserDirectiveContextError("wrong context", "nginx.conf", 7);
+        Assert.That(ex.Strerror, Is.EqualTo("wrong context"));
+    }
+
+    [Test]
+    public void NgxParserDirectiveUnknownError_FullCtor_SetsProperties()
+    {
+        var ex = new NgxParserDirectiveUnknownError("unknown directive", "nginx.conf", 2);
+        Assert.That(ex.Strerror, Is.EqualTo("unknown directive"));
+    }
+
     // ── helpers ────────────────────────────────────────────────────────────
 
     private static IEnumerable<ConfigBlock> Flatten(IEnumerable<ConfigBlock> blocks)
@@ -562,5 +685,4 @@ public class ParserTests
         }
     }
 }
-
 
