@@ -60,12 +60,6 @@ crossplanesharp build  payload.json -d /etc/nginx/
 
 ---
 
-## Cross-platform paths
-
-The library uses `System.IO.Path` and `RuntimeInformation.IsOSPlatform` for all file path handling — no custom helpers. NGINX config `include` paths (which always use `/`) are normalised to the OS-native separator at runtime, so parsing works correctly on both Unix and Windows.
-
----
-
 ## Requirements
 
 The library targets **`netstandard2.0`** (compatible with .NET 6+, .NET Framework 4.6.1+, .NET Core 2.0+, Mono, Xamarin, Unity).  
