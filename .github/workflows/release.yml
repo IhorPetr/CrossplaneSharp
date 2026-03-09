@@ -92,5 +92,28 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           generate_release_notes: true
+          body: |
+            ## 📦 NuGet Packages
+
+            | Package | Version |
+            |---------|---------|
+            | [CrossplaneSharp](https://www.nuget.org/packages/CrossplaneSharp/${{ steps.version.outputs.VERSION }}) | `${{ steps.version.outputs.VERSION }}` |
+            | [CrossplaneSharp.Tool](https://www.nuget.org/packages/CrossplaneSharp.Tool/${{ steps.version.outputs.VERSION }}) | `${{ steps.version.outputs.VERSION }}` |
+
+            ## 🚀 Install
+
+            **Library:**
+            ```bash
+            dotnet add package CrossplaneSharp --version ${{ steps.version.outputs.VERSION }}
+            ```
+
+            **CLI Tool:**
+            ```bash
+            dotnet tool install -g CrossplaneSharp.Tool --version ${{ steps.version.outputs.VERSION }}
+            ```
+
+            ## 🔄 Changes
+
+            Ported from Python source: [nginxinc/crossplane](https://github.com/nginxinc/crossplane)
           files: ./nupkgs/*.nupkg
 
