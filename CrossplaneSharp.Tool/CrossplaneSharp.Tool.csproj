@@ -27,7 +27,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="..\docs\README.tool.md" Pack="true" PackagePath="\README.md" />
+        <None Include="$(MSBuildThisFileDirectory)..\docs\README.tool.md" Pack="true" PackagePath="\README.md" />
+        <None Include="$(MSBuildThisFileDirectory)..\LICENSE" Pack="true" PackagePath="" />
     </ItemGroup>
 
     <ItemGroup>
