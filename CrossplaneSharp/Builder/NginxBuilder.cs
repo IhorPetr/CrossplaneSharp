@@ -50,10 +50,12 @@ namespace CrossplaneSharp
             {
                 string path = config.File;
                 // Normalise separators so forward-slash paths work on Windows
-                if (!PathHelper.IsPathRooted(path))
-                    path = PathHelper.Combine(dirname, path);
+                if (!Path.IsPathRooted(path) && path[0] != '/')
+                    path = Path.Combine(
+                        dirname,
+                        path);
                 else
-                    path = PathHelper.ToNative(path);
+                    path = path;
 
                 string dirPath = Path.GetDirectoryName(path);
                 if (!string.IsNullOrEmpty(dirPath) && !Directory.Exists(dirPath))

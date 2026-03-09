@@ -27,7 +27,7 @@ namespace CrossplaneSharp
         public ParseResult Parse(string filename, ParseOptions options = null)
         {
             options = options ?? new ParseOptions();
-            filename = PathHelper.GetFullPath(filename);
+            filename = Path.GetFullPath(filename);
             string configDir = Path.GetDirectoryName(filename) ?? Directory.GetCurrentDirectory();
 
             var payload = new ParseResult();
@@ -36,7 +36,8 @@ namespace CrossplaneSharp
             var includes = new List<(string File, IReadOnlyList<string> Ctx)>
                 { (filename, Array.Empty<string>()) };
             // Use OS-appropriate comparer: case-insensitive on Windows, ordinal on Unix
-            var included = new Dictionary<string, int>(PathHelper.PathComparer)
+            var included = new Dictionary<string, int>(
+                Path.DirectorySeparatorChar == '\\' ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal)
                 { [filename] = 0 };
 
             // iterate – list grows during iteration
@@ -191,10 +192,12 @@ namespace CrossplaneSharp
                     stmt.Includes = new List<int>();
                     string pattern = stmt.Args[0];
                     // Normalise separator: NGINX configs use '/', convert to OS-native
-                    if (!PathHelper.IsPathRooted(pattern))
-                        pattern = PathHelper.Combine(configDir, pattern);
+                    if (!Path.IsPathRooted(pattern) && pattern[0] != '/')
+                        pattern = Path.Combine(
+                            configDir,
+                            pattern);
                     else
-                        pattern = PathHelper.ToNative(pattern);
+                        pattern = pattern;
 
                     List<string> fnames;
                     if (HasGlobMagic(pattern))
@@ -220,7 +223,7 @@ namespace CrossplaneSharp
 
                     foreach (var incFile in fnames)
                     {
-                        string absInc = PathHelper.GetFullPath(incFile);
+                        string absInc = Path.GetFullPath(incFile);
                         if (!included.ContainsKey(absInc))
                         {
                             included[absInc] = includes.Count;

@@ -4,7 +4,7 @@
 [![NuGet](https://img.shields.io/nuget/v/CrossplaneSharp.svg?label=CrossplaneSharp)](https://www.nuget.org/packages/CrossplaneSharp)
 [![NuGet Tool](https://img.shields.io/nuget/v/CrossplaneSharp.Tool.svg?label=CrossplaneSharp.Tool)](https://www.nuget.org/packages/CrossplaneSharp.Tool)
 
-A unofficial C# port of the Python [crossplane](https://github.com/nginxinc/crossplane) library — a fast, reliable NGINX configuration file **lexer**, **parser**, and **builder** for .NET.
+A C# NGINX configuration file **lexer**, **parser**, and **builder** for .NET.
 
 ---
 
@@ -47,8 +47,8 @@ dotnet tool install -g CrossplaneSharp.Tool
 ```
 
 ```bash
-crossplanesharp parse /etc/nginx/nginx.conf -i 4
-crossplanesharp lex   /etc/nginx/nginx.conf -n
+crossplanesharp parse  /etc/nginx/nginx.conf -i 4
+crossplanesharp lex    /etc/nginx/nginx.conf -n
 crossplanesharp minify /etc/nginx/nginx.conf
 crossplanesharp format /etc/nginx/nginx.conf
 crossplanesharp build  payload.json -d /etc/nginx/
@@ -58,7 +58,13 @@ crossplanesharp build  payload.json -d /etc/nginx/
 
 ---
 
+## Cross-platform paths
+
+The library uses `System.IO.Path` and `RuntimeInformation.IsOSPlatform` for all file path handling — no custom helpers. NGINX config `include` paths (which always use `/`) are normalised to the OS-native separator at runtime, so parsing works correctly on both Unix and Windows.
+
+---
+
 ## Requirements
 
-The library targets **`netstandard2.0`** (compatible with .NET 6+, .NET Framework 4.6.1+, .NET Core 2.0+, Mono, Xamarin, Unity).
+The library targets **`netstandard2.0`** (compatible with .NET 6+, .NET Framework 4.6.1+, .NET Core 2.0+, Mono, Xamarin, Unity).  
 The CLI tool requires **.NET 8+**.

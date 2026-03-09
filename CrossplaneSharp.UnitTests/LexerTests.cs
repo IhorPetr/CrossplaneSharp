@@ -1,13 +1,13 @@
 using CrossplaneSharp.Exceptions;
+using System.Runtime.InteropServices;
 
 namespace CrossplaneSharp.UnitTests;
 
 [TestFixture]
 public class LexerTests
 {
-    private static string Fix(string sub) =>
-        Path.Combine(TestContext.CurrentContext.TestDirectory, "nginx",
-            sub.Replace('/', Path.DirectorySeparatorChar));
+    private static readonly string NginxDir =
+        Path.Combine(TestContext.CurrentContext.TestDirectory, "nginx");
 
     private static List<NgxToken> Lex(string content) =>
         new NginxLexer().TokenizeContent(content).ToList();
@@ -149,7 +149,9 @@ public class LexerTests
     [Test]
     public void Fixture_Simple_ContainsExpectedTokenValues()
     {
-        var t = new NginxLexer().Tokenize(Fix("simple/nginx.conf")).ToList();
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "simple\\nginx.conf" : "simple/nginx.conf";
+        var t = new NginxLexer().Tokenize(Path.Combine(NginxDir, filePath)).ToList();
         Assert.That(t.Any(x => x.Value == "events"),             Is.True);
         Assert.That(t.Any(x => x.Value == "worker_connections"), Is.True);
         Assert.That(t.Any(x => x.Value == "http"),               Is.True);
@@ -162,7 +164,9 @@ public class LexerTests
     [Test]
     public void Fixture_Simple_QuotedReturnValue()
     {
-        var t = new NginxLexer().Tokenize(Fix("simple/nginx.conf")).ToList();
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "simple\\nginx.conf" : "simple/nginx.conf";
+        var t = new NginxLexer().Tokenize(Path.Combine(NginxDir, filePath)).ToList();
         // "foo bar baz" must be a single quoted token
         var q = t.FirstOrDefault(x => x.IsQuoted && x.Value.Contains("foo bar baz"));
         Assert.That(q, Is.Not.Null);
@@ -173,7 +177,9 @@ public class LexerTests
     [Test]
     public void Fixture_WithComments_CommentTokensPresent()
     {
-        var t = new NginxLexer().Tokenize(Fix("with-comments/nginx.conf")).ToList();
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "with-comments\\nginx.conf" : "with-comments/nginx.conf";
+        var t = new NginxLexer().Tokenize(Path.Combine(NginxDir, filePath)).ToList();
         var comments = t.Where(x => x.Value.StartsWith("#")).ToList();
         Assert.That(comments.Count, Is.GreaterThanOrEqualTo(4));
     }
@@ -181,7 +187,9 @@ public class LexerTests
     [Test]
     public void Fixture_WithComments_InlineListenComment()
     {
-        var t = new NginxLexer().Tokenize(Fix("with-comments/nginx.conf")).ToList();
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "with-comments\\nginx.conf" : "with-comments/nginx.conf";
+        var t = new NginxLexer().Tokenize(Path.Combine(NginxDir, filePath)).ToList();
         // "#listen" appears on same line as the listen directive (line 7)
         var listenLine = t.First(x => x.Value == "listen").Line;
         Assert.That(t.Any(x => x.Value.StartsWith("#listen") && x.Line == listenLine), Is.True);
@@ -192,15 +200,17 @@ public class LexerTests
     [Test]
     public void Fixture_Messy_ParsesWithoutBalanceError()
     {
-        Assert.DoesNotThrow(() => { var _ = new NginxLexer().Tokenize(Fix("messy/nginx.conf")).ToList(); });
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "messy\\nginx.conf" : "messy/nginx.conf";
+        Assert.DoesNotThrow(() => { var _ = new NginxLexer().Tokenize(Path.Combine(NginxDir, filePath)).ToList(); });
     }
 
     [Test]
     public void Fixture_Messy_HasQuotedTokens()
     {
-        // messy.conf uses quoted directive names like "events", "http" etc.
-        // The lexer should produce tokens with IsQuoted=true for those
-        var t = new NginxLexer().Tokenize(Fix("messy/nginx.conf")).ToList();
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "messy\\nginx.conf" : "messy/nginx.conf";
+        var t = new NginxLexer().Tokenize(Path.Combine(NginxDir, filePath)).ToList();
         Assert.That(t.Any(x => x.IsQuoted), Is.True);
     }
 
@@ -209,7 +219,9 @@ public class LexerTests
     [Test]
     public void Fixture_RussianText_SingleQuotedToken()
     {
-        var t = new NginxLexer().Tokenize(Fix("russian-text/nginx.conf")).ToList();
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "russian-text\\nginx.conf" : "russian-text/nginx.conf";
+        var t = new NginxLexer().Tokenize(Path.Combine(NginxDir, filePath)).ToList();
         var q = t.FirstOrDefault(x => x.IsQuoted && x.Value.Contains("русский"));
         Assert.That(q, Is.Not.Null);
     }
@@ -219,9 +231,8 @@ public class LexerTests
     [Test]
     public void Fixture_QuotedRightBrace_DoesNotThrowBalanceError()
     {
-        // the closing "}" inside single-quoted string must not affect brace balance
-        Assert.DoesNotThrow(() => { var _ = new NginxLexer().Tokenize(Fix("quoted-right-brace/nginx.conf")).ToList(); });
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "quoted-right-brace\\nginx.conf" : "quoted-right-brace/nginx.conf";
+        Assert.DoesNotThrow(() => { var _ = new NginxLexer().Tokenize(Path.Combine(NginxDir, filePath)).ToList(); });
     }
 }
-
-

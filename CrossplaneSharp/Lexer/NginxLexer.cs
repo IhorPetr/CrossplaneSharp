@@ -22,7 +22,7 @@ namespace CrossplaneSharp
         /// </summary>
         public IReadOnlyList<NgxToken> Lex(string filename)
         {
-            string content = File.ReadAllText(PathHelper.ToNative(filename), Encoding.UTF8);
+            string content = File.ReadAllText(filename, Encoding.UTF8);
             return LexContent(content, filename).ToList();
         }
 
@@ -38,7 +38,7 @@ namespace CrossplaneSharp
         /// </summary>
         public IEnumerable<NgxToken> Tokenize(string filename)
         {
-            string content = File.ReadAllText(PathHelper.ToNative(filename), Encoding.UTF8);
+            string content = File.ReadAllText(filename, Encoding.UTF8);
             return LexContent(content, filename);
         }
 

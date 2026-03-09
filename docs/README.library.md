@@ -2,7 +2,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/CrossplaneSharp.svg?label=CrossplaneSharp)](https://www.nuget.org/packages/CrossplaneSharp)
 
-A fast, reliable NGINX configuration file **lexer**, **parser**, and **builder** packaged as a .NET Standard 2.0 NuGet library.
+A fast, reliable NGINX configuration file **lexer**, **parser**, and **builder** for .NET, packaged as a `netstandard2.0` NuGet library.
 
 > **CLI Tool** — looking for the command-line tool? See [README.tool.md](README.tool.md) or the [`CrossplaneSharp.Tool`](https://www.nuget.org/packages/CrossplaneSharp.Tool) NuGet package.
 
@@ -216,6 +216,22 @@ NgxParserBaseException
     ├── NgxParserDirectiveUnknownError    unknown directive (strict mode)
     ├── NgxParserDirectiveContextError    directive not allowed in this context
     └── NgxParserDirectiveArgumentsError  wrong number of arguments
+```
+
+---
+
+## Cross-platform paths
+
+The library uses `System.IO.Path` and `System.Runtime.InteropServices.RuntimeInformation` for all path handling — no custom helpers. NGINX config `include` directives always use forward-slash paths; the library normalises them to the OS-native separator at runtime so parsing works correctly on Windows, Linux, and macOS.
+
+When writing tests against fixture files, use the same pattern:
+
+```csharp
+var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+    ? "simple\\nginx.conf"
+    : "simple/nginx.conf";
+
+var result = Crossplane.Parse(Path.Combine(fixtureDir, filePath));
 ```
 
 ---

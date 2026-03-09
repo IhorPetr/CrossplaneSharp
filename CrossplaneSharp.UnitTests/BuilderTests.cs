@@ -1,17 +1,18 @@
+using System.Runtime.InteropServices;
+
 namespace CrossplaneSharp.UnitTests;
 
 [TestFixture]
 public class BuilderTests
 {
-    private static string Fix(string sub) =>
-        Path.Combine(TestContext.CurrentContext.TestDirectory, "nginx",
-            sub.Replace('/', Path.DirectorySeparatorChar));
+    private static readonly string NginxDir =
+        Path.Combine(TestContext.CurrentContext.TestDirectory, "nginx");
 
     private static string Build(List<ConfigBlock> blocks, BuildOptions? opts = null) =>
         new NginxBuilder().Build(blocks, opts);
 
     private static List<ConfigBlock> ParseBlocks(string fixtureSub) =>
-        new NginxParser().Parse(Fix(fixtureSub), new ParseOptions { Single = true })
+        new NginxParser().Parse(Path.Combine(NginxDir, fixtureSub), new ParseOptions { Single = true })
             .Config[0].Parsed;
 
     // ── basic output ───────────────────────────────────────────────────────
@@ -190,7 +191,9 @@ public class BuilderTests
     [Test]
     public void RoundTrip_Simple_ContainsExpectedContent()
     {
-        var out_ = Build(ParseBlocks("simple/nginx.conf"));
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "simple\\nginx.conf" : "simple/nginx.conf";
+        var out_ = Build(ParseBlocks(filePath));
         Assert.That(out_, Does.Contain("events {"));
         Assert.That(out_, Does.Contain("worker_connections 1024;"));
         Assert.That(out_, Does.Contain("http {"));
@@ -203,8 +206,9 @@ public class BuilderTests
     [Test]
     public void RoundTrip_Simple_IsSemicolonTerminated()
     {
-        var out_ = Build(ParseBlocks("simple/nginx.conf"));
-        // every non-block line should end with ; or {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "simple\\nginx.conf" : "simple/nginx.conf";
+        var out_ = Build(ParseBlocks(filePath));
         foreach (var line in out_.Split('\n').Select(l => l.Trim())
                                   .Where(l => l.Length > 0 && !l.StartsWith("#") && l != "}"))
         {
@@ -216,9 +220,10 @@ public class BuilderTests
     [Test]
     public void RoundTrip_WithComments_CommentsPreserved()
     {
-        // parse WITH comments, build, check they appear
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "with-comments\\nginx.conf" : "with-comments/nginx.conf";
         var blocks = new NginxParser()
-            .Parse(Fix("with-comments/nginx.conf"),
+            .Parse(Path.Combine(NginxDir, filePath),
                    new ParseOptions { Single = true, Comments = true })
             .Config[0].Parsed;
         var out_ = Build(blocks);
@@ -228,32 +233,37 @@ public class BuilderTests
     [Test]
     public void RoundTrip_DirectiveWithSpace_MapPreserved()
     {
-        var out_ = Build(ParseBlocks("directive-with-space/nginx.conf"));
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "directive-with-space\\nginx.conf" : "directive-with-space/nginx.conf";
+        var out_ = Build(ParseBlocks(filePath));
         Assert.That(out_, Does.Contain("map $http_user_agent $mobile {"));
     }
 
     [Test]
     public void RoundTrip_EmptyValueMap_EmptyStringReQuoted()
     {
-        var out_ = Build(ParseBlocks("empty-value-map/nginx.conf"));
-        // empty string args must be rendered as "" in output
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "empty-value-map\\nginx.conf" : "empty-value-map/nginx.conf";
+        var out_ = Build(ParseBlocks(filePath));
         Assert.That(out_, Does.Contain("\"\""));
     }
 
     [Test]
     public void RoundTrip_QuotedRightBrace_ClosingBraceInsideQuotes()
     {
-        var out_ = Build(ParseBlocks("quoted-right-brace/nginx.conf"));
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "quoted-right-brace\\nginx.conf" : "quoted-right-brace/nginx.conf";
+        var out_ = Build(ParseBlocks(filePath));
         Assert.That(out_, Does.Contain("log_format"));
-        // the last quoted fragment '}' should appear in output
         Assert.That(out_, Does.Contain("@timestamp"));
     }
 
     [Test]
     public void RoundTrip_RussianText_EnvDirectivePresent()
     {
-        var out_ = Build(ParseBlocks("russian-text/nginx.conf"));
-        // Builder may JSON-encode unicode or preserve it — either way env; must appear
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "russian-text\\nginx.conf" : "russian-text/nginx.conf";
+        var out_ = Build(ParseBlocks(filePath));
         Assert.That(out_, Does.Contain("env "));
         Assert.That(out_, Does.Contain("events {"));
     }
@@ -331,5 +341,4 @@ public class BuilderTests
         finally { Directory.Delete(dir, recursive: true); }
     }
 }
-
 
