@@ -10,7 +10,7 @@ public class LexerTests
         Path.Combine(TestContext.CurrentContext.TestDirectory, "nginx");
 
     private static List<NgxToken> Lex(string content) =>
-        new NginxLexer().TokenizeContent(content).ToList();
+        Crossplane.LexString(content).ToList();
 
     // ── basic tokenisation ─────────────────────────────────────────────────
 
@@ -124,7 +124,7 @@ public class LexerTests
     {
         var ex = Assert.Throws<NgxParserSyntaxError>(() =>
         {
-            var _ = new NginxLexer().TokenizeContent("worker_processes 4; }").ToList();
+            var _ = Crossplane.LexString("worker_processes 4; }").ToList();
         });
         Assert.That(ex!.Strerror, Does.Contain("unexpected"));
     }
@@ -134,14 +134,14 @@ public class LexerTests
     {
         Assert.Throws<NgxParserSyntaxError>(() =>
         {
-            var _ = new NginxLexer().TokenizeContent("events { worker_connections 1024;").ToList();
+            var _ = Crossplane.LexString("events { worker_connections 1024;").ToList();
         });
     }
 
     [Test]
     public void BalancedBraces_DoesNotThrow()
     {
-        Assert.DoesNotThrow(() => { var _ = new NginxLexer().TokenizeContent("events { worker_connections 1024; }").ToList(); });
+        Assert.DoesNotThrow(() => { var _ = Crossplane.LexString("events { worker_connections 1024; }").ToList(); });
     }
 
     // ── fixture: simple ────────────────────────────────────────────────────
@@ -151,7 +151,7 @@ public class LexerTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "simple\\nginx.conf" : "simple/nginx.conf";
-        var t = new NginxLexer().Tokenize(Path.Combine(NginxDir, filePath)).ToList();
+        var t = Crossplane.Lex(Path.Combine(NginxDir, filePath)).ToList();
         Assert.That(t.Any(x => x.Value == "events"),             Is.True);
         Assert.That(t.Any(x => x.Value == "worker_connections"), Is.True);
         Assert.That(t.Any(x => x.Value == "http"),               Is.True);
@@ -166,7 +166,7 @@ public class LexerTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "simple\\nginx.conf" : "simple/nginx.conf";
-        var t = new NginxLexer().Tokenize(Path.Combine(NginxDir, filePath)).ToList();
+        var t = Crossplane.Lex(Path.Combine(NginxDir, filePath)).ToList();
         // "foo bar baz" must be a single quoted token
         var q = t.FirstOrDefault(x => x.IsQuoted && x.Value.Contains("foo bar baz"));
         Assert.That(q, Is.Not.Null);
@@ -179,7 +179,7 @@ public class LexerTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "with-comments\\nginx.conf" : "with-comments/nginx.conf";
-        var t = new NginxLexer().Tokenize(Path.Combine(NginxDir, filePath)).ToList();
+        var t = Crossplane.Lex(Path.Combine(NginxDir, filePath)).ToList();
         var comments = t.Where(x => x.Value.StartsWith("#")).ToList();
         Assert.That(comments.Count, Is.GreaterThanOrEqualTo(4));
     }
@@ -189,7 +189,7 @@ public class LexerTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "with-comments\\nginx.conf" : "with-comments/nginx.conf";
-        var t = new NginxLexer().Tokenize(Path.Combine(NginxDir, filePath)).ToList();
+        var t = Crossplane.Lex(Path.Combine(NginxDir, filePath)).ToList();
         // "#listen" appears on same line as the listen directive (line 7)
         var listenLine = t.First(x => x.Value == "listen").Line;
         Assert.That(t.Any(x => x.Value.StartsWith("#listen") && x.Line == listenLine), Is.True);
@@ -202,7 +202,7 @@ public class LexerTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "messy\\nginx.conf" : "messy/nginx.conf";
-        Assert.DoesNotThrow(() => { var _ = new NginxLexer().Tokenize(Path.Combine(NginxDir, filePath)).ToList(); });
+        Assert.DoesNotThrow(() => { var _ = Crossplane.Lex(Path.Combine(NginxDir, filePath)).ToList(); });
     }
 
     [Test]
@@ -210,7 +210,7 @@ public class LexerTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "messy\\nginx.conf" : "messy/nginx.conf";
-        var t = new NginxLexer().Tokenize(Path.Combine(NginxDir, filePath)).ToList();
+        var t = Crossplane.Lex(Path.Combine(NginxDir, filePath)).ToList();
         Assert.That(t.Any(x => x.IsQuoted), Is.True);
     }
 
@@ -221,7 +221,7 @@ public class LexerTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "russian-text\\nginx.conf" : "russian-text/nginx.conf";
-        var t = new NginxLexer().Tokenize(Path.Combine(NginxDir, filePath)).ToList();
+        var t = Crossplane.Lex(Path.Combine(NginxDir, filePath)).ToList();
         var q = t.FirstOrDefault(x => x.IsQuoted && x.Value.Contains("русский"));
         Assert.That(q, Is.Not.Null);
     }
@@ -233,6 +233,6 @@ public class LexerTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "quoted-right-brace\\nginx.conf" : "quoted-right-brace/nginx.conf";
-        Assert.DoesNotThrow(() => { var _ = new NginxLexer().Tokenize(Path.Combine(NginxDir, filePath)).ToList(); });
+        Assert.DoesNotThrow(() => { var _ = Crossplane.Lex(Path.Combine(NginxDir, filePath)).ToList(); });
     }
 }

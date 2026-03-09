@@ -12,7 +12,7 @@ public class ParserTests
     private static ParseResult Parse(string content, ParseOptions? opts = null)
     {
         var tmp = Path.GetTempFileName();
-        try   { File.WriteAllText(tmp, content); return new NginxParser().Parse(tmp, opts); }
+        try   { File.WriteAllText(tmp, content); return Crossplane.Parse(tmp, opts); }
         finally { File.Delete(tmp); }
     }
 

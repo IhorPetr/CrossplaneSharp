@@ -9,10 +9,10 @@ public class BuilderTests
         Path.Combine(TestContext.CurrentContext.TestDirectory, "nginx");
 
     private static string Build(List<ConfigBlock> blocks, BuildOptions? opts = null) =>
-        new NginxBuilder().Build(blocks, opts);
+        Crossplane.Build(blocks, opts);
 
     private static List<ConfigBlock> ParseBlocks(string fixtureSub) =>
-        new NginxParser().Parse(Path.Combine(NginxDir, fixtureSub), new ParseOptions { Single = true })
+        Crossplane.Parse(Path.Combine(NginxDir, fixtureSub), new ParseOptions { Single = true })
             .Config[0].Parsed;
 
     // ── basic output ───────────────────────────────────────────────────────
@@ -20,28 +20,28 @@ public class BuilderTests
     [Test]
     public void SimpleDirective_SemicolonTerminated()
     {
-        var out_ = Build([new() { Directive = "daemon", Args = ["off"] }]);
+        var out_ = Crossplane.Build([new() { Directive = "daemon", Args = ["off"] }]);
         Assert.That(out_.Trim(), Is.EqualTo("daemon off;"));
     }
 
     [Test]
     public void NoArgs_JustSemicolon()
     {
-        var out_ = Build([new() { Directive = "gzip_vary" }]);
+        var out_ = Crossplane.Build([new() { Directive = "gzip_vary" }]);
         Assert.That(out_.Trim(), Is.EqualTo("gzip_vary;"));
     }
 
     [Test]
     public void MultipleArgs_SpaceSeparated()
     {
-        var out_ = Build([new() { Directive = "error_page", Args = ["404", "/404.html"] }]);
+        var out_ = Crossplane.Build([new() { Directive = "error_page", Args = ["404", "/404.html"] }]);
         Assert.That(out_.Trim(), Is.EqualTo("error_page 404 /404.html;"));
     }
 
     [Test]
     public void BlockDirective_BracesFormatted()
     {
-        var out_ = Build([new()
+        var out_ = Crossplane.Build([new()
         {
             Directive = "events",
             Block = [new() { Directive = "worker_connections", Args = ["1024"] }]
@@ -54,7 +54,7 @@ public class BuilderTests
     [Test]
     public void EmptyBlock_OpenAndClose()
     {
-        var out_ = Build([new() { Directive = "events", Block = [] }]);
+        var out_ = Crossplane.Build([new() { Directive = "events", Block = [] }]);
         Assert.That(out_, Does.Contain("events {"));
         Assert.That(out_, Does.Contain("}"));
     }
@@ -64,7 +64,7 @@ public class BuilderTests
     [Test]
     public void DefaultIndent_FourSpaces()
     {
-        var out_ = Build([new()
+        var out_ = Crossplane.Build([new()
         {
             Directive = "events",
             Block = [new() { Directive = "worker_connections", Args = ["1024"] }]
@@ -222,8 +222,7 @@ public class BuilderTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "with-comments\\nginx.conf" : "with-comments/nginx.conf";
-        var blocks = new NginxParser()
-            .Parse(Path.Combine(NginxDir, filePath),
+        var blocks = Crossplane.Parse(Path.Combine(NginxDir, filePath),
                    new ParseOptions { Single = true, Comments = true })
             .Config[0].Parsed;
         var out_ = Build(blocks);
@@ -288,7 +287,7 @@ public class BuilderTests
                     Parsed = [new ConfigBlock { Directive = "worker_processes", Args = ["2"] }]
                 }]
             };
-            new NginxBuilder().BuildFiles(payload);
+            Crossplane.BuildFiles(payload);
             var written = File.ReadAllText(outPath);
             Assert.That(written.Trim(), Is.EqualTo("worker_processes 2;"));
         }
@@ -312,7 +311,7 @@ public class BuilderTests
                     Parsed = [new ConfigBlock { Directive = "daemon", Args = ["off"] }]
                 }]
             };
-            new NginxBuilder().BuildFiles(payload);
+            Crossplane.BuildFiles(payload);
             Assert.That(File.Exists(outPath), Is.True);
         }
         finally { if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true); }
@@ -335,7 +334,7 @@ public class BuilderTests
                     Parsed = [new ConfigBlock { Directive = "pid", Args = ["/run/nginx.pid"] }]
                 }]
             };
-            new NginxBuilder().BuildFiles(payload, dirname: dir);
+            Crossplane.BuildFiles(payload, dirname: dir);
             Assert.That(File.Exists(Path.Combine(dir, "relative.conf")), Is.True);
         }
         finally { Directory.Delete(dir, recursive: true); }
