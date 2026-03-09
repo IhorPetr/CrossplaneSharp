@@ -243,8 +243,7 @@ public class LexerTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "simple\\nginx.conf" : "simple/nginx.conf";
-        var lexer = new NginxLexer();
-        var tokens = lexer.Lex(Path.Combine(NginxDir, filePath));
+        var tokens = Crossplane.Lex(Path.Combine(NginxDir, filePath));
         Assert.That(tokens, Is.Not.Empty);
         Assert.That(tokens.Any(t => t.Value == "http"), Is.True);
     }
@@ -252,8 +251,7 @@ public class LexerTests
     [Test]
     public void NginxLexer_LexString_ReturnsTokens()
     {
-        var lexer = new NginxLexer();
-        var tokens = lexer.LexString("gzip on;");
+        var tokens = Crossplane.LexString("gzip on;");
         Assert.That(tokens.Count, Is.EqualTo(3));
         Assert.That(tokens[0].Value, Is.EqualTo("gzip"));
     }
@@ -261,15 +259,13 @@ public class LexerTests
     [Test]
     public void NginxLexer_LexString_WithFilename_DoesNotThrow()
     {
-        var lexer = new NginxLexer();
-        Assert.DoesNotThrow(() => lexer.LexString("worker_processes 2;", "test.conf"));
+        Assert.DoesNotThrow(() => Crossplane.LexString("worker_processes 2;", "test.conf"));
     }
 
     [Test]
     public void NginxLexer_TokenizeContent_ReturnsLazySequence()
     {
-        var lexer = new NginxLexer();
-        var tokens = lexer.TokenizeContent("server_name example.com;").ToList();
+        var tokens = Crossplane.LexString("server_name example.com;").ToList();
         Assert.That(tokens.Any(t => t.Value == "server_name"), Is.True);
     }
 

@@ -12,7 +12,7 @@ namespace CrossplaneSharp
     /// C# port of Python crossplane <c>parser.py</c> — including context tracking,
     /// include-file index management, <c>if(…)</c> arg stripping, and combine mode.
     /// </summary>
-    public class NginxParser
+    internal class NginxParser
     {
         private readonly NginxLexer _lexer = new NginxLexer();
 

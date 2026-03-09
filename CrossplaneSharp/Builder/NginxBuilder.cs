@@ -11,7 +11,7 @@ namespace CrossplaneSharp
     /// including <c>_enquote</c>, <c>if(…)</c> syntax, same-line inline comments,
     /// optional header, and <c>BuildFiles</c>.
     /// </summary>
-    public class NginxBuilder
+    internal class NginxBuilder
     {
         // ──────────────────────────────────────────────────────────────────────────
         // Public API

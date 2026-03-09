@@ -272,8 +272,8 @@ public class BuilderTests
     [Test]
     public void NginxBuilder_Build_SimpleDirective()
     {
-        var builder = new NginxBuilder();
-        var result = builder.Build(new List<ConfigBlock>
+        
+        var result = Crossplane.Build(new List<ConfigBlock>
         {
             new ConfigBlock { Directive = "worker_processes", Args = new List<string> { "2" } }
         });
@@ -283,8 +283,8 @@ public class BuilderTests
     [Test]
     public void NginxBuilder_Build_WithHeader()
     {
-        var builder = new NginxBuilder();
-        var result = builder.Build(
+        
+        var result = Crossplane.Build(
             new List<ConfigBlock> { new ConfigBlock { Directive = "gzip_vary" } },
             new BuildOptions { Header = true });
         Assert.That(result, Does.Contain("# This config was built"));
@@ -293,8 +293,8 @@ public class BuilderTests
     [Test]
     public void NginxBuilder_Build_WithTabs()
     {
-        var builder = new NginxBuilder();
-        var result = builder.Build(new List<ConfigBlock>
+        
+        var result = Crossplane.Build(new List<ConfigBlock>
         {
             new ConfigBlock
             {
@@ -311,8 +311,8 @@ public class BuilderTests
     [Test]
     public void NginxBuilder_Build_EnquotesArgWithSpace()
     {
-        var builder = new NginxBuilder();
-        var result = builder.Build(new List<ConfigBlock>
+        
+        var result = Crossplane.Build(new List<ConfigBlock>
         {
             new ConfigBlock { Directive = "add_header", Args = new List<string> { "Cache-Control", "no-store, no-cache" } }
         });
@@ -322,8 +322,8 @@ public class BuilderTests
     [Test]
     public void NginxBuilder_Build_EnquotesEmptyArg()
     {
-        var builder = new NginxBuilder();
-        var result = builder.Build(new List<ConfigBlock>
+        
+        var result = Crossplane.Build(new List<ConfigBlock>
         {
             new ConfigBlock { Directive = "set", Args = new List<string> { "$v", "" } }
         });
@@ -333,8 +333,8 @@ public class BuilderTests
     [Test]
     public void NginxBuilder_Build_IfDirectiveWrapsInParens()
     {
-        var builder = new NginxBuilder();
-        var result = builder.Build(new List<ConfigBlock>
+        
+        var result = Crossplane.Build(new List<ConfigBlock>
         {
             new ConfigBlock
             {
@@ -352,7 +352,7 @@ public class BuilderTests
     [Test]
     public void NginxBuilder_BuildFiles_CreatesSubDirectory()
     {
-        var builder = new NginxBuilder();
+        
         var dir = Path.Combine(Path.GetTempPath(), $"ngx_{Guid.NewGuid():N}");
         try
         {
@@ -373,7 +373,7 @@ public class BuilderTests
                     }
                 }
             };
-            builder.BuildFiles(payload);
+            Crossplane.BuildFiles(payload);
             Assert.That(File.Exists(outPath), Is.True);
         }
         finally { if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true); }

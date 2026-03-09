@@ -70,7 +70,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "simple\\nginx.conf" : "simple/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Single = true });
         Assert.That(r.Status, Is.EqualTo("ok"));
     }
@@ -80,7 +80,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "simple\\nginx.conf" : "simple/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Single = true });
         var names = r.Config[0].Parsed.Select(s => s.Directive).ToList();
         Assert.That(names, Does.Contain("events"));
@@ -92,7 +92,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "simple\\nginx.conf" : "simple/nginx.conf";
-        var r        = new NginxParser().Parse(Path.Combine(NginxDir, filePath), new ParseOptions { Single = true });
+        var r        = Crossplane.Parse(Path.Combine(NginxDir, filePath), new ParseOptions { Single = true });
         var http     = r.Config[0].Parsed.First(s => s.Directive == "http");
         var server   = http.Block!.First(s => s.Directive == "server");
         var location = server.Block!.First(s => s.Directive == "location");
@@ -105,7 +105,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "simple\\nginx.conf" : "simple/nginx.conf";
-        var r      = new NginxParser().Parse(Path.Combine(NginxDir, filePath), new ParseOptions { Single = true });
+        var r      = Crossplane.Parse(Path.Combine(NginxDir, filePath), new ParseOptions { Single = true });
         var server = r.Config[0].Parsed.First(s => s.Directive == "http")
                                         .Block!.First(s => s.Directive == "server");
         var listen = server.Block!.First(s => s.Directive == "listen");
@@ -119,7 +119,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "with-comments\\nginx.conf" : "with-comments/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Single = true });
         foreach (var config in r.Config)
             Assert.That(config.Parsed.All(s => s.Directive != "#"), Is.True);
@@ -130,7 +130,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "with-comments\\nginx.conf" : "with-comments/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Single = true, Comments = true });
         var allStmts = Flatten(r.Config[0].Parsed);
         Assert.That(allStmts.Any(s => s.Directive == "#"), Is.True);
@@ -141,7 +141,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "with-comments\\nginx.conf" : "with-comments/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Single = true, Comments = true });
         var comment = r.Config[0].Parsed.First(s => s.Directive == "#" && s.Line == 4);
         Assert.That(comment.Comment, Does.Contain("comment"));
@@ -154,7 +154,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "comments-between-args\\nginx.conf" : "comments-between-args/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Single = true, Comments = true });
         Assert.That(r.Status, Is.EqualTo("ok"));
     }
@@ -164,7 +164,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "comments-between-args\\nginx.conf" : "comments-between-args/nginx.conf";
-        var r    = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r    = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Single = true });
         var http = r.Config[0].Parsed.First(s => s.Directive == "http");
         var lf   = http.Block!.First(s => s.Directive == "log_format");
@@ -178,7 +178,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "bad-args\\nginx.conf" : "bad-args/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { CatchErrors = true });
         Assert.That(r.Status, Is.EqualTo("failed"));
         Assert.That(r.Errors, Is.Not.Empty);
@@ -189,7 +189,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "bad-args\\nginx.conf" : "bad-args/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { CatchErrors = true });
         Assert.That(r.Errors[0].Line, Is.Not.Null);
         Assert.That(r.Errors[0].Line, Is.EqualTo(1));
@@ -201,7 +201,7 @@ public class ParserTests
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "bad-args\\nginx.conf" : "bad-args/nginx.conf";
         Assert.Throws<NgxParserDirectiveArgumentsError>(() =>
-            new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+            Crossplane.Parse(Path.Combine(NginxDir, filePath),
                 new ParseOptions { CatchErrors = false }));
     }
 
@@ -212,7 +212,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "missing-semicolon\\broken-above.conf" : "missing-semicolon/broken-above.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { CatchErrors = true });
         Assert.That(r.Status, Is.EqualTo("failed"));
     }
@@ -222,7 +222,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "missing-semicolon\\broken-above.conf" : "missing-semicolon/broken-above.conf";
-        var r        = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r        = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { CatchErrors = true });
         var allStmts = Flatten(r.Config[0].Parsed);
         Assert.That(allStmts.Any(s => s.Directive == "location"
@@ -234,7 +234,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "missing-semicolon\\broken-below.conf" : "missing-semicolon/broken-below.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { CatchErrors = true });
         Assert.That(r.Status, Is.EqualTo("failed"));
     }
@@ -246,7 +246,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "spelling-mistake\\nginx.conf" : "spelling-mistake/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Strict = false });
         Assert.That(r.Status, Is.EqualTo("ok"));
     }
@@ -256,7 +256,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "spelling-mistake\\nginx.conf" : "spelling-mistake/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Strict = true, CatchErrors = true });
         Assert.That(r.Status, Is.EqualTo("failed"));
         Assert.That(r.Errors[0].Error, Does.Contain("proxy_passs"));
@@ -269,7 +269,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "includes-regular\\nginx.conf" : "includes-regular/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Single = true });
         Assert.That(r.Config, Has.Count.EqualTo(1));
     }
@@ -279,7 +279,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "includes-regular\\nginx.conf" : "includes-regular/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath));
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath));
         Assert.That(r.Config.Count, Is.GreaterThanOrEqualTo(2));
     }
 
@@ -288,7 +288,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "includes-regular\\nginx.conf" : "includes-regular/nginx.conf";
-        var r       = new NginxParser().Parse(Path.Combine(NginxDir, filePath));
+        var r       = Crossplane.Parse(Path.Combine(NginxDir, filePath));
         var http    = r.Config[0].Parsed.First(s => s.Directive == "http");
         var include = http.Block!.First(s => s.Directive == "include");
         Assert.That(include.Includes, Is.Not.Null);
@@ -301,7 +301,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "includes-regular\\nginx.conf" : "includes-regular/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath));
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath));
         var fooConfig = r.Config.FirstOrDefault(c => c.File.EndsWith("foo.conf")
             && !c.File.Contains("conf.d"));
         Assert.That(fooConfig, Is.Not.Null);
@@ -316,7 +316,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "includes-globbed\\nginx.conf" : "includes-globbed/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath));
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath));
         Assert.That(r.Status, Is.EqualTo("ok"));
     }
 
@@ -325,7 +325,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "includes-globbed\\nginx.conf" : "includes-globbed/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath));
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath));
         Assert.That(r.Config.Count, Is.GreaterThanOrEqualTo(4));
     }
 
@@ -334,7 +334,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "includes-globbed\\nginx.conf" : "includes-globbed/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath));
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath));
         var files = r.Config.Select(c => Path.GetFileName(c.File)).ToList();
         Assert.That(files, Does.Contain("server1.conf"));
         Assert.That(files, Does.Contain("server2.conf"));
@@ -347,7 +347,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "directive-with-space\\nginx.conf" : "directive-with-space/nginx.conf";
-        var r    = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r    = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Single = true });
         Assert.That(r.Status, Is.EqualTo("ok"));
         var http = r.Config[0].Parsed.First(s => s.Directive == "http");
@@ -361,7 +361,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "directive-with-space\\nginx.conf" : "directive-with-space/nginx.conf";
-        var r    = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r    = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Single = true });
         var http = r.Config[0].Parsed.First(s => s.Directive == "http");
         var map  = http.Block!.First(s => s.Directive == "map");
@@ -377,7 +377,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "empty-value-map\\nginx.conf" : "empty-value-map/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Single = true });
         Assert.That(r.Status, Is.EqualTo("ok"));
     }
@@ -387,7 +387,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "empty-value-map\\nginx.conf" : "empty-value-map/nginx.conf";
-        var r    = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r    = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Single = true });
         var http = r.Config[0].Parsed.First(s => s.Directive == "http");
         var map  = http.Block!.First(s => s.Directive == "map");
@@ -406,7 +406,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "quoted-right-brace\\nginx.conf" : "quoted-right-brace/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Single = true });
         Assert.That(r.Status, Is.EqualTo("ok"));
     }
@@ -416,7 +416,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "quoted-right-brace\\nginx.conf" : "quoted-right-brace/nginx.conf";
-        var r    = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r    = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Single = true });
         var http = r.Config[0].Parsed.First(s => s.Directive == "http");
         var lf   = http.Block!.First(s => s.Directive == "log_format");
@@ -430,7 +430,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "russian-text\\nginx.conf" : "russian-text/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Single = true });
         Assert.That(r.Status, Is.EqualTo("ok"));
     }
@@ -440,7 +440,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "russian-text\\nginx.conf" : "russian-text/nginx.conf";
-        var r   = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r   = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Single = true });
         var env = r.Config[0].Parsed.First(s => s.Directive == "env");
         Assert.That(env.Args[0], Does.Contain("русский"));
@@ -454,7 +454,7 @@ public class ParserTests
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "messy\\nginx.conf" : "messy/nginx.conf";
         Assert.DoesNotThrow(() =>
-            new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+            Crossplane.Parse(Path.Combine(NginxDir, filePath),
                 new ParseOptions { Single = true, CatchErrors = true }));
     }
 
@@ -478,7 +478,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "includes-regular\\nginx.conf" : "includes-regular/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Combine = true });
         Assert.That(r.Config, Has.Count.EqualTo(1));
     }
@@ -488,7 +488,7 @@ public class ParserTests
     {
         var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "includes-regular\\nginx.conf" : "includes-regular/nginx.conf";
-        var r = new NginxParser().Parse(Path.Combine(NginxDir, filePath),
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
             new ParseOptions { Combine = true });
         var allNames = Flatten(r.Config[0].Parsed).Select(s => s.Directive).ToList();
         Assert.That(allNames, Contains.Item("server"));

@@ -10,7 +10,7 @@ namespace CrossplaneSharp
     /// <summary>
     /// Tokenises an NGINX configuration file into a stream of <see cref="NgxToken"/> values.
     /// </summary>
-    public class NginxLexer
+    internal class NginxLexer
     {
         // -------------------------------------------------------------------------
         // Public API
