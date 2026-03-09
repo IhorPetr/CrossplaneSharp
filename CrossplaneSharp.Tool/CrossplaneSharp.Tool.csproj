@@ -21,12 +21,14 @@
         <PackageTags>nginx;crossplane;config;parser;lexer;builder;tool;cli</PackageTags>
         <RepositoryUrl>https://github.com/IhorPetr/CrossplaneSharp</RepositoryUrl>
         <PackageProjectUrl>https://github.com/IhorPetr/CrossplaneSharp</PackageProjectUrl>
+        <PackageIcon>icon.png</PackageIcon>
         <RepositoryType>Github</RepositoryType>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <GenerateDocumentationFile>false</GenerateDocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
+        <None Include="$(MSBuildThisFileDirectory)..\images\icon.png" Pack="true" Visible="false" PackagePath="" />
         <None Include="$(MSBuildThisFileDirectory)..\docs\README.tool.md" Pack="true" PackagePath="\README.md" />
         <None Include="$(MSBuildThisFileDirectory)..\LICENSE" Pack="true" PackagePath="" />
     </ItemGroup>

@@ -15,6 +15,7 @@
         <RepositoryUrl>https://github.com/IhorPetr/CrossplaneSharp</RepositoryUrl>
         <PackageProjectUrl>https://github.com/IhorPetr/CrossplaneSharp</PackageProjectUrl>
         <RepositoryType>Github</RepositoryType>
+        <PackageIcon>icon.png</PackageIcon>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <!-- Suppress XML-doc and style warnings that are not errors -->
@@ -26,6 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <None Include="$(MSBuildThisFileDirectory)../images/icon.png" Pack="true" Visible="false" PackagePath="" />
         <None Include="$(MSBuildThisFileDirectory)../docs/README.library.md" Pack="true" PackagePath="\README.md" />
         <None Include="$(MSBuildThisFileDirectory)../LICENSE" Pack="true" PackagePath="" />
     </ItemGroup>
