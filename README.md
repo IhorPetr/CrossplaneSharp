@@ -1,7 +1,5 @@
 # CrossplaneSharp
 
-![CrossplaneSharp](images/main-logo.png)
-
 [![CI](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/ci.yml)
 [![Release](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/release.yml/badge.svg)](https://github.com/IhorPetr/CrossplaneSharp/actions/workflows/release.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/IhorPetr/CrossplaneSharp?label=latest%20release)](https://github.com/IhorPetr/CrossplaneSharp/releases/latest)
