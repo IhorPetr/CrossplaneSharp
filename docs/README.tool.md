@@ -4,6 +4,7 @@
 
 A `crossplanesharp` CLI tool for parsing, lexing, building, formatting and minifying NGINX configuration files. Runs on Windows, Linux, and macOS.
 
+> **Library** — looking for the C# library? See [README.library.md](README.library.md) or the [`CrossplaneSharp`](https://www.nuget.org/packages/CrossplaneSharp) NuGet package.
 
 ---
 
