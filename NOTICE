@@ -1,0 +1,17 @@
+CrossplaneSharp
+Copyright 2026 IhorPetr
+
+This product is an unofficial C# port of crossplane
+(https://github.com/nginxinc/crossplane),
+originally developed by NGINX, Inc. and contributors.
+
+Original Python library:
+  crossplane — Copyright 2019 NGINX, Inc.
+  Licensed under the Apache License, Version 2.0
+  Source: https://github.com/nginxinc/crossplane
+
+This product includes software derived from the above work.
+You may obtain a copy of the Apache License at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
