@@ -4,7 +4,6 @@
 
 A fast, reliable NGINX configuration file **lexer**, **parser**, and **builder** for .NET, packaged as a `netstandard2.0` NuGet library.
 
-> **CLI Tool** — looking for the command-line tool? See [README.tool.md](README.tool.md) or the [`CrossplaneSharp.Tool`](https://www.nuget.org/packages/CrossplaneSharp.Tool) NuGet package.
 
 ---
 
