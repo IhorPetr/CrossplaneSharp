@@ -8,8 +8,7 @@
         <PackageId>CrossplaneSharp</PackageId>
         <Version Condition="'$(PackageVersion)' != ''">$(PackageVersion)</Version>
         <Version Condition="'$(PackageVersion)' == ''">1.0.0</Version>
-        <Authors>IhorPetr</Authors>
-        <Copyright>Copyright 2026 IhorPetr. Based on crossplane (https://github.com/nginxinc/crossplane), Copyright 2019 NGINX, Inc., Apache-2.0.</Copyright>
+        <Authors>IhorPetr</Authors>ß
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <Description>(Unofficial C# port of nginxinc/crossplane) NGINX configuration file lexer, parser, and builder for .NET. Targets netstandard2.0 — compatible with .NET 6+, .NET Framework 4.6.1+, .NET Core 2.0+, Mono, Xamarin and Unity.</Description>
         <PackageTags>nginx;crossplane;config;parser;lexer;builder</PackageTags>
