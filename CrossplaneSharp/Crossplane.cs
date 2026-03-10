@@ -6,6 +6,7 @@ namespace CrossplaneSharp
     /// <summary>
     /// Top-level entry point for the CrossplaneSharp library,
     /// exposing <c>Lex</c>, <c>Parse</c>, <c>Build</c> and <c>BuildFiles</c>.
+    /// C# port of Python crossplane
     /// </summary>
     public static class Crossplane
     {
