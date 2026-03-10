@@ -1,3 +1,7 @@
+// Based on crossplane (https://github.com/nginxinc/crossplane)
+// Copyright 2019 NGINX, Inc. — Apache License 2.0
+// C# port Copyright 2026 IhorPetr — Apache License 2.0
+
 using System.Collections.Generic;
 
 namespace CrossplaneSharp
