@@ -9,7 +9,7 @@ namespace CrossplaneSharp
     /// <summary>
     /// Validates NGINX directives: context rules and argument-count constraints.
     /// </summary>
-    public static class NginxAnalyzer
+    internal static class NginxAnalyzer
     {
         // ─── bitmasks for argument styles ────────────────────────────────────────
         public const uint NGX_CONF_NOARGS = 0x00000001;

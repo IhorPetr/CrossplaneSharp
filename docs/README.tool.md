@@ -2,7 +2,7 @@
 
 [![NuGet Tool](https://img.shields.io/nuget/v/CrossplaneSharp.Tool.svg?label=CrossplaneSharp.Tool)](https://www.nuget.org/packages/CrossplaneSharp.Tool)
 
-A `crossplanesharp` CLI tool for parsing, lexing, building, formatting and minifying NGINX configuration files. Runs on Windows, Linux, and macOS.
+A unofficial C# port of the Python [crossplane](https://github.com/nginxinc/crossplane) library — A `crossplanesharp` CLI tool for parsing, lexing, building, formatting and minifying NGINX configuration files. Runs on Windows, Linux, and macOS.
 
 > **Library** — looking for the C# library? See [README.library.md](README.library.md) or the [`CrossplaneSharp`](https://www.nuget.org/packages/CrossplaneSharp) NuGet package.
 
