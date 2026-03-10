@@ -672,6 +672,230 @@ public class ParserTests
         Assert.That(ex.Strerror, Is.EqualTo("unknown directive"));
     }
 
+    // ── fixture: if-expr ─────────────────────────────────────────────────
+
+    [Test]
+    public void Fixture_IfExpr_StatusOk()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-expr\\nginx.conf" : "if-expr/nginx.conf";
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
+            new ParseOptions { Single = true });
+        Assert.That(r.Status, Is.EqualTo("ok"));
+        Assert.That(r.Errors, Is.Empty);
+    }
+
+    [Test]
+    public void Fixture_IfExpr_IfDirective_ParenthesesStripped()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-expr\\nginx.conf" : "if-expr/nginx.conf";
+        var r      = Crossplane.Parse(Path.Combine(NginxDir, filePath),
+            new ParseOptions { Single = true });
+        var server = r.Config[0].Parsed.First(s => s.Directive == "http")
+                                       .Block!.First(s => s.Directive == "server");
+        var ifBlk  = server.Block!.First(s => s.Directive == "if");
+        // outer parens must be stripped from args
+        Assert.That(ifBlk.Args.Any(a => a.StartsWith("(") || a.EndsWith(")")), Is.False);
+    }
+
+    [Test]
+    public void Fixture_IfExpr_IfDirective_ArgIsVariable()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-expr\\nginx.conf" : "if-expr/nginx.conf";
+        var r      = Crossplane.Parse(Path.Combine(NginxDir, filePath),
+            new ParseOptions { Single = true });
+        var server = r.Config[0].Parsed.First(s => s.Directive == "http")
+                                       .Block!.First(s => s.Directive == "server");
+        var ifBlk  = server.Block!.First(s => s.Directive == "if");
+        Assert.That(ifBlk.Args, Has.Count.EqualTo(1));
+        Assert.That(ifBlk.Args[0], Is.EqualTo("$slow"));
+    }
+
+    [Test]
+    public void Fixture_IfExpr_IfBlock_ContainsSetDirective()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-expr\\nginx.conf" : "if-expr/nginx.conf";
+        var r      = Crossplane.Parse(Path.Combine(NginxDir, filePath),
+            new ParseOptions { Single = true });
+        var server = r.Config[0].Parsed.First(s => s.Directive == "http")
+                                       .Block!.First(s => s.Directive == "server");
+        var ifBlk  = server.Block!.First(s => s.Directive == "if");
+        Assert.That(ifBlk.Block, Is.Not.Null);
+        var set = ifBlk.Block!.First(s => s.Directive == "set");
+        Assert.That(set.Args[0], Is.EqualTo("$var"));
+        Assert.That(set.Args[1], Is.EqualTo("10"));
+    }
+
+    [Test]
+    public void Fixture_IfExpr_IfBlock_HasCorrectLineNumber()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-expr\\nginx.conf" : "if-expr/nginx.conf";
+        var r      = Crossplane.Parse(Path.Combine(NginxDir, filePath),
+            new ParseOptions { Single = true });
+        var server = r.Config[0].Parsed.First(s => s.Directive == "http")
+                                       .Block!.First(s => s.Directive == "server");
+        var ifBlk  = server.Block!.First(s => s.Directive == "if");
+        Assert.That(ifBlk.Line, Is.EqualTo(9));
+    }
+
+    [Test]
+    public void Fixture_IfExpr_LocationPresentAlongsideIf()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-expr\\nginx.conf" : "if-expr/nginx.conf";
+        var r      = Crossplane.Parse(Path.Combine(NginxDir, filePath),
+            new ParseOptions { Single = true });
+        var server = r.Config[0].Parsed.First(s => s.Directive == "http")
+                                       .Block!.First(s => s.Directive == "server");
+        Assert.That(server.Block!.Any(s => s.Directive == "if"),       Is.True);
+        Assert.That(server.Block!.Any(s => s.Directive == "location"), Is.True);
+    }
+
+    [Test]
+    public void Fixture_IfExpr_LocationRoot_ReturnsFooBarBaz()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-expr\\nginx.conf" : "if-expr/nginx.conf";
+        var r        = Crossplane.Parse(Path.Combine(NginxDir, filePath),
+            new ParseOptions { Single = true });
+        var server   = r.Config[0].Parsed.First(s => s.Directive == "http")
+                                         .Block!.First(s => s.Directive == "server");
+        var location = server.Block!.First(s => s.Directive == "location");
+        var ret      = location.Block!.First(s => s.Directive == "return");
+        Assert.That(ret.Args[0], Is.EqualTo("200"));
+        Assert.That(ret.Args[1], Is.EqualTo("foo bar baz"));
+    }
+
+    [Test]
+    public void Fixture_IfExpr_Events_WorkerConnections1024()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-expr\\nginx.conf" : "if-expr/nginx.conf";
+        var r      = Crossplane.Parse(Path.Combine(NginxDir, filePath),
+            new ParseOptions { Single = true });
+        var events = r.Config[0].Parsed.First(s => s.Directive == "events");
+        var wc     = events.Block!.First(s => s.Directive == "worker_connections");
+        Assert.That(wc.Args[0], Is.EqualTo("1024"));
+    }
+
+    [Test]
+    public void Fixture_IfExpr_Throws_WhenNotCatching_WrongContext()
+    {
+        // parse without CheckCtx=false to verify context is enforced
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-expr\\nginx.conf" : "if-expr/nginx.conf";
+        // with default options (CheckCtx=true) this should be ok since
+        // if is valid in http|server context
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath));
+        Assert.That(r.Status, Is.EqualTo("ok"));
+    }
+
+    // ── fixture: if-check ────────────────────────────────────────────────
+
+    [Test]
+    public void Fixture_IfCheck_CatchErrors_StatusFailed()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-check\\nginx.conf" : "if-check/nginx.conf";
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
+            new ParseOptions { Single = true, CatchErrors = true });
+        Assert.That(r.Status, Is.EqualTo("failed"));
+        Assert.That(r.Errors, Is.Not.Empty);
+    }
+
+    [Test]
+    public void Fixture_IfCheck_EmptyIf_ProducesArgumentError()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-check\\nginx.conf" : "if-check/nginx.conf";
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
+            new ParseOptions { Single = true, CatchErrors = true });
+        // empty if() → 0 args → invalid number of arguments in "if" directive
+        Assert.That(r.Errors.Any(e =>
+            e.Error.Contains("\"if\"") || e.Error.Contains("argument")), Is.True);
+    }
+
+    [Test]
+    public void Fixture_IfCheck_EmptyIf_ThrowsWhenNotCatching()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-check\\nginx.conf" : "if-check/nginx.conf";
+        // empty if() → NgxParserDirectiveArgumentsError (a NgxParserDirectiveError)
+        Assert.Throws<CrossplaneSharp.Exceptions.NgxParserDirectiveArgumentsError>(() =>
+            Crossplane.Parse(Path.Combine(NginxDir, filePath),
+                new ParseOptions { Single = true, CatchErrors = false }));
+    }
+
+    [Test]
+    public void Fixture_IfCheck_ValidIfBlock_ArgIsSomething()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-check\\nginx.conf" : "if-check/nginx.conf";
+        var r        = Crossplane.Parse(Path.Combine(NginxDir, filePath),
+            new ParseOptions { Single = true, CatchErrors = true });
+        var allBlocks = Flatten(r.Config[0].Parsed).ToList();
+        // the valid if ($something) block should still be parsed
+        var validIf   = allBlocks.FirstOrDefault(s =>
+            s.Directive == "if" && s.Args.Any(a => a.Contains("$something")));
+        Assert.That(validIf, Is.Not.Null);
+    }
+
+    [Test]
+    public void Fixture_IfCheck_ValidIfBlock_ContainsReturn418()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-check\\nginx.conf" : "if-check/nginx.conf";
+        var r        = Crossplane.Parse(Path.Combine(NginxDir, filePath),
+            new ParseOptions { Single = true, CatchErrors = true });
+        var allBlocks = Flatten(r.Config[0].Parsed).ToList();
+        var validIf   = allBlocks.First(s =>
+            s.Directive == "if" && s.Args.Any(a => a.Contains("$something")));
+        var ret = validIf.Block!.First(s => s.Directive == "return");
+        Assert.That(ret.Args[0], Is.EqualTo("418"));
+    }
+
+    [Test]
+    public void Fixture_IfCheck_ErrorReportsLineNumber()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-check\\nginx.conf" : "if-check/nginx.conf";
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
+            new ParseOptions { Single = true, CatchErrors = true });
+        Assert.That(r.Errors[0].Line, Is.Not.Null);
+        Assert.That(r.Errors[0].Line, Is.GreaterThan(0));
+    }
+
+    [Test]
+    public void Fixture_IfCheck_LocationRoot_StillParsed()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-check\\nginx.conf" : "if-check/nginx.conf";
+        var r = Crossplane.Parse(Path.Combine(NginxDir, filePath),
+            new ParseOptions { Single = true, CatchErrors = true });
+        var all = Flatten(r.Config[0].Parsed).ToList();
+        // location / with return 200 should still be in the tree
+        var loc = all.FirstOrDefault(s => s.Directive == "location"
+                                       && s.Args.Contains("/"));
+        Assert.That(loc, Is.Not.Null);
+    }
+
+    [Test]
+    public void Fixture_IfCheck_ServerListenAddress()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-check\\nginx.conf" : "if-check/nginx.conf";
+        var r      = Crossplane.Parse(Path.Combine(NginxDir, filePath),
+            new ParseOptions { Single = true, CatchErrors = true });
+        var server = r.Config[0].Parsed.First(s => s.Directive == "http")
+                                       .Block!.First(s => s.Directive == "server");
+        var listen = server.Block!.First(s => s.Directive == "listen");
+        Assert.That(listen.Args[0], Is.EqualTo("127.0.0.1:8080"));
+    }
+
     // ── helpers ────────────────────────────────────────────────────────────
 
     private static IEnumerable<ConfigBlock> Flatten(IEnumerable<ConfigBlock> blocks)

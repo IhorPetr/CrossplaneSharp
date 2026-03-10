@@ -334,7 +334,8 @@ namespace CrossplaneSharp
                 args[last] = args[last].Substring(0, args[last].Length - 1).TrimEnd();
                 int start = args[0].Length == 0 ? 1 : 0;
                 int end   = args[last].Length == 0 ? args.Count - 1 : args.Count;
-                var trimmed = args.GetRange(start, end - start);
+                int count = end - start;
+                var trimmed = count > 0 ? args.GetRange(start, count) : new List<string>();
                 args.Clear();
                 args.AddRange(trimmed);
             }

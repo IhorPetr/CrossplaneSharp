@@ -2,7 +2,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/CrossplaneSharp.svg?label=CrossplaneSharp)](https://www.nuget.org/packages/CrossplaneSharp)
 
-A fast, reliable NGINX configuration file **lexer**, **parser**, and **builder** for .NET, packaged as a `netstandard2.0` NuGet library.
+A unofficial C# port of the Python [crossplane](https://github.com/nginxinc/crossplane) — a fast, reliable NGINX configuration file **lexer**, **parser**, and **builder** for .NET, packaged as a `netstandard2.0` NuGet library.
 
 
 ---

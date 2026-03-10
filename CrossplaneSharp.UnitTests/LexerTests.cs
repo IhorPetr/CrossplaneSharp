@@ -305,4 +305,139 @@ public class LexerTests
         var str = token.ToString();
         Assert.That(str, Does.Contain("listen"));
     }
+
+    // ── fixture: if-expr ─────────────────────────────────────────────────
+
+    [Test]
+    public void Fixture_IfExpr_Lex_DoesNotThrow()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-expr\\nginx.conf" : "if-expr/nginx.conf";
+        Assert.DoesNotThrow(() =>
+            Crossplane.Lex(Path.Combine(NginxDir, filePath)).ToList());
+    }
+
+    [Test]
+    public void Fixture_IfExpr_Lex_IfTokenPresent()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-expr\\nginx.conf" : "if-expr/nginx.conf";
+        var tokens = Crossplane.Lex(Path.Combine(NginxDir, filePath));
+        Assert.That(tokens.Any(t => t.Value == "if"), Is.True);
+    }
+
+    [Test]
+    public void Fixture_IfExpr_Lex_VariableTokenPresent()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-expr\\nginx.conf" : "if-expr/nginx.conf";
+        var tokens = Crossplane.Lex(Path.Combine(NginxDir, filePath));
+        Assert.That(tokens.Any(t => t.Value.Contains("$slow")), Is.True);
+    }
+
+    [Test]
+    public void Fixture_IfExpr_Lex_SetAndReturnTokensPresent()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-expr\\nginx.conf" : "if-expr/nginx.conf";
+        var tokens = Crossplane.Lex(Path.Combine(NginxDir, filePath));
+        Assert.That(tokens.Any(t => t.Value == "set"),    Is.True);
+        Assert.That(tokens.Any(t => t.Value == "return"), Is.True);
+    }
+
+    [Test]
+    public void Fixture_IfExpr_Lex_BracesAreBalanced()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-expr\\nginx.conf" : "if-expr/nginx.conf";
+        var tokens  = Crossplane.Lex(Path.Combine(NginxDir, filePath)).ToList();
+        var opening = tokens.Count(t => t.Value == "{");
+        var closing = tokens.Count(t => t.Value == "}");
+        Assert.That(opening, Is.EqualTo(closing));
+    }
+
+    [Test]
+    public void Fixture_IfExpr_Lex_IfArgIsParenWrappedVariable()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-expr\\nginx.conf" : "if-expr/nginx.conf";
+        var tokens = Crossplane.Lex(Path.Combine(NginxDir, filePath)).ToList();
+        var idx    = tokens.FindIndex(t => t.Value == "if");
+        Assert.That(idx, Is.GreaterThanOrEqualTo(0));
+        // raw token after "if" should be "($slow)" — lexer does not strip parens
+        var argToken = tokens[idx + 1];
+        Assert.That(argToken.Value, Does.Contain("$slow"));
+    }
+
+    [Test]
+    public void Fixture_IfExpr_Lex_LineNumbersArePositive()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-expr\\nginx.conf" : "if-expr/nginx.conf";
+        var tokens = Crossplane.Lex(Path.Combine(NginxDir, filePath));
+        Assert.That(tokens.All(t => t.Line >= 1), Is.True);
+    }
+
+    // ── fixture: if-check ─────────────────────────────────────────────────
+
+    [Test]
+    public void Fixture_IfCheck_Lex_DoesNotThrow()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-check\\nginx.conf" : "if-check/nginx.conf";
+        // Lexer does not validate argument semantics — only brace balance
+        Assert.DoesNotThrow(() =>
+            Crossplane.Lex(Path.Combine(NginxDir, filePath)).ToList());
+    }
+
+    [Test]
+    public void Fixture_IfCheck_Lex_IfTokensPresentTwice()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-check\\nginx.conf" : "if-check/nginx.conf";
+        var tokens = Crossplane.Lex(Path.Combine(NginxDir, filePath)).ToList();
+        // two if directives: if ($something) and if ()
+        Assert.That(tokens.Count(t => t.Value == "if"), Is.EqualTo(2));
+    }
+
+    [Test]
+    public void Fixture_IfCheck_Lex_EmptyParensToken()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-check\\nginx.conf" : "if-check/nginx.conf";
+        var tokens = Crossplane.Lex(Path.Combine(NginxDir, filePath)).ToList();
+        // the empty if () produces a token "()"
+        Assert.That(tokens.Any(t => t.Value == "()"), Is.True);
+    }
+
+    [Test]
+    public void Fixture_IfCheck_Lex_BracesAreBalanced()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-check\\nginx.conf" : "if-check/nginx.conf";
+        var tokens  = Crossplane.Lex(Path.Combine(NginxDir, filePath)).ToList();
+        var opening = tokens.Count(t => t.Value == "{");
+        var closing = tokens.Count(t => t.Value == "}");
+        Assert.That(opening, Is.EqualTo(closing));
+    }
+
+    [Test]
+    public void Fixture_IfCheck_Lex_ErrorPageAndRecursiveErrorPagesPresent()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-check\\nginx.conf" : "if-check/nginx.conf";
+        var tokens = Crossplane.Lex(Path.Combine(NginxDir, filePath));
+        Assert.That(tokens.Any(t => t.Value == "error_page"),            Is.True);
+        Assert.That(tokens.Any(t => t.Value == "recursive_error_pages"), Is.True);
+    }
+
+    [Test]
+    public void Fixture_IfCheck_Lex_Return418And500Present()
+    {
+        var filePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "if-check\\nginx.conf" : "if-check/nginx.conf";
+        var tokens = Crossplane.Lex(Path.Combine(NginxDir, filePath));
+        Assert.That(tokens.Any(t => t.Value == "418"), Is.True);
+        Assert.That(tokens.Any(t => t.Value == "500"), Is.True);
+    }
 }
